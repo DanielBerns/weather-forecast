@@ -219,6 +219,28 @@ def test_cli_argument_parsing():
 
     print("✓ test_cli_argument_parsing passed!")
 
+def test_gbdt_checkpoint_and_selective_models():
+    from forecast_system.models.ml_models import GradientBoostingForecast
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        dates = pd.date_range('2024-01-01', periods=300, freq='1h')
+        temps = 15.0 + 5.0 * np.sin(np.linspace(0, 5 * np.pi, 300))
+        df = pd.DataFrame({'temp': temps, 'dew': temps - 2.0}, index=dates)
+        X, Y_h, Y_s = create_features_and_targets(df)
+
+        gbdt = GradientBoostingForecast(max_iter=5)
+        gbdt.fit(X, Y_h, Y_s)
+        save_path = os.path.join(tmp_dir, "gbdt.joblib")
+        gbdt.save(save_path)
+
+        assert os.path.exists(save_path)
+        loaded_gbdt = GradientBoostingForecast.load(save_path)
+        p_h, p_s = loaded_gbdt.predict(X)
+        assert p_h.shape == Y_h.shape
+        assert p_s.shape == (len(X), 3)
+
+        print("✓ test_gbdt_checkpoint_and_selective_models passed!")
+
 if __name__ == '__main__':
     test_parse_hourly_temp()
     test_config_loading()
@@ -228,4 +250,5 @@ if __name__ == '__main__':
     test_restartable_training()
     test_reset_and_resume_modes()
     test_cli_argument_parsing()
+    test_gbdt_checkpoint_and_selective_models()
     print("ALL UNIT TESTS PASSED SUCCESSFULLY!")

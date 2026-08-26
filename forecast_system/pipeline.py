@@ -77,65 +77,81 @@ def run_pipeline(config_path=None):
     Y_h_train_full = pd.concat([Y_h_train, Y_h_val])
     Y_s_train_full = pd.concat([Y_s_train, Y_s_val])
 
+    # Parse models selection filter
+    selected_models = cfg['pipeline'].get('models', ['all'])
+    if isinstance(selected_models, str):
+        selected_models = [selected_models]
+    selected_models = [m.lower() for m in selected_models]
+    run_all = 'all' in selected_models
+
     print("\n========================================================")
     print(f"STEP 3: TRAINING & MODEL FITTING (MODE: {mode.upper()})")
     print("========================================================")
 
+    models_dict = {}
+
     # 1. Persistence Baseline
-    persistence_model = PersistenceForecast().fit(X_train_full, Y_h_train_full, Y_s_train_full)
+    if run_all or 'persistence' in selected_models:
+        models_dict['Persistence Baseline'] = PersistenceForecast().fit(X_train_full, Y_h_train_full, Y_s_train_full)
 
     # 2. Climatology Baseline
-    climatology_model = ClimatologyForecast().fit(df_combined.loc[df_combined.index < '2026-01-01'])
+    if run_all or 'climatology' in selected_models:
+        models_dict['Climatology Baseline'] = ClimatologyForecast().fit(df_combined.loc[df_combined.index < '2026-01-01'])
 
     # 3. Ridge Linear
-    ridge_model = RidgeLinearForecast(
-        alpha=ml_cfg.get('ridge_alpha', 1.0)
-    ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
+    if run_all or 'ridge' in selected_models:
+        models_dict['Ridge Regression'] = RidgeLinearForecast(
+            alpha=ml_cfg.get('ridge_alpha', 1.0)
+        ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
 
-    # 4. HistGradientBoosting (GBDT)
-    gbdt_model = GradientBoostingForecast(
-        max_iter=ml_cfg.get('gbdt_max_iter', 40),
-        learning_rate=ml_cfg.get('gbdt_learning_rate', 0.1),
-        random_state=ml_cfg.get('gbdt_random_state', 42)
-    ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
+    # 4. HistGradientBoosting (GBDT) - Resumable checkpointing
+    if run_all or 'gbdt' in selected_models or 'gradient_boosting' in selected_models or 'gbt' in selected_models:
+        gbdt_checkpoint_file = outputs_dir / "gbdt_checkpoint.joblib"
+        if not is_reset and gbdt_checkpoint_file.exists():
+            print(f"✓ [RESUME MODE] Loading pre-trained Gradient Boosted Trees model from {gbdt_checkpoint_file}")
+            gbdt_model = GradientBoostingForecast.load(gbdt_checkpoint_file)
+        else:
+            gbdt_model = GradientBoostingForecast(
+                max_iter=ml_cfg.get('gbdt_max_iter', 40),
+                learning_rate=ml_cfg.get('gbdt_learning_rate', 0.1),
+                random_state=ml_cfg.get('gbdt_random_state', 42)
+            ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
+            gbdt_model.save(gbdt_checkpoint_file)
+            print(f"Saved Gradient Boosted Trees checkpoint to {gbdt_checkpoint_file}")
+        models_dict['Gradient Boosted Trees'] = gbdt_model
 
     # 5. Deep Learning (LSTM) - Resumable/Resetable Training
-    lstm_model = LSTMForecastModel(
-        units=dl_cfg.get('units', 64),
-        dropout=dl_cfg.get('dropout', 0.2),
-        learning_rate=dl_cfg.get('learning_rate', 0.001)
-    )
-    checkpoint_file = outputs_dir / "lstm_checkpoint.keras"
-    history_file = outputs_dir / "training_history.json"
+    if run_all or 'lstm' in selected_models or 'deep_learning' in selected_models:
+        lstm_model = LSTMForecastModel(
+            units=dl_cfg.get('units', 64),
+            dropout=dl_cfg.get('dropout', 0.2),
+            learning_rate=dl_cfg.get('learning_rate', 0.001)
+        )
+        checkpoint_file = outputs_dir / "lstm_checkpoint.keras"
+        history_file = outputs_dir / "training_history.json"
 
-    lstm_model.fit_restartable(
-        X_train=X_train,
-        Y_hourly_train=Y_h_train,
-        Y_summary_train=Y_s_train,
-        X_val=X_val,
-        Y_hourly_val=Y_h_val,
-        epochs_per_iter=epochs_per_iter,
-        target_mae=target_mae,
-        max_iters=max_iters,
-        batch_size=dl_cfg.get('batch_size', 64),
-        patience=dl_cfg.get('patience', 10),
-        verbose=0,
-        checkpoint_path=str(checkpoint_file),
-        history_path=str(history_file),
-        reset=is_reset
-    )
+        lstm_model.fit_restartable(
+            X_train=X_train,
+            Y_hourly_train=Y_h_train,
+            Y_summary_train=Y_s_train,
+            X_val=X_val,
+            Y_hourly_val=Y_h_val,
+            epochs_per_iter=epochs_per_iter,
+            target_mae=target_mae,
+            max_iters=max_iters,
+            batch_size=dl_cfg.get('batch_size', 64),
+            patience=dl_cfg.get('patience', 10),
+            verbose=0,
+            checkpoint_path=str(checkpoint_file),
+            history_path=str(history_file),
+            reset=is_reset
+        )
 
-    # Fallback copy for root report directory
-    with open(output_dir / "training_history.json", 'w') as f:
-        json.dump(lstm_model.training_history, f, indent=2)
+        # Fallback copy for root report directory
+        with open(output_dir / "training_history.json", 'w') as f:
+            json.dump(lstm_model.training_history, f, indent=2)
 
-    models_dict = {
-        'Persistence Baseline': persistence_model,
-        'Climatology Baseline': climatology_model,
-        'Ridge Regression': ridge_model,
-        'Gradient Boosted Trees': gbdt_model,
-        'Deep Learning (LSTM)': lstm_model
-    }
+        models_dict['Deep Learning (LSTM)'] = lstm_model
 
     print("\n========================================================")
     print("STEP 4: EVALUATING OUT-OF-SAMPLE PRECISION & ACCURACY")

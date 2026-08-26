@@ -1,3 +1,5 @@
+import os
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -48,6 +50,17 @@ class GradientBoostingForecast:
 
         pred_summary = np.column_stack([pred_tmax, pred_tmin, pred_tavg])
         return pred_hourly, pred_summary
+
+    def save(self, filepath):
+        """Saves GBDT model artifact to disk."""
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        joblib.dump(self, filepath)
+
+    @classmethod
+    def load(cls, filepath):
+        """Loads GBDT model artifact from disk."""
+        return joblib.load(filepath)
+
 
 
 class RidgeLinearForecast:

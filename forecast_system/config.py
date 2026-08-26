@@ -5,6 +5,7 @@ from pathlib import Path
 DEFAULT_CONFIG = {
     'pipeline': {
         'mode': 'resume',
+        'models': ['all'],
         'output_dir': 'report',
         'data_dir': 'data'
     },
