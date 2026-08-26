@@ -2,216 +2,78 @@
   "epochs": [
     {
       "epoch": 1,
-      "train_loss": 0.2564,
-      "val_loss": 0.22195,
+      "train_loss": 0.25676,
+      "val_loss": 0.21821,
       "train_mae": 2.508,
-      "val_mae": 2.347,
+      "val_mae": 2.323,
       "iteration": 1
     },
     {
       "epoch": 2,
-      "train_loss": 0.23733,
-      "val_loss": 0.22118,
+      "train_loss": 0.23735,
+      "val_loss": 0.22052,
       "train_mae": 2.409,
-      "val_mae": 2.332,
+      "val_mae": 2.335,
       "iteration": 1
     },
     {
       "epoch": 3,
-      "train_loss": 0.23442,
-      "val_loss": 0.21963,
-      "train_mae": 2.392,
-      "val_mae": 2.331,
+      "train_loss": 0.23505,
+      "val_loss": 0.21838,
+      "train_mae": 2.396,
+      "val_mae": 2.315,
       "iteration": 2
     },
     {
       "epoch": 4,
-      "train_loss": 0.23272,
-      "val_loss": 0.21804,
-      "train_mae": 2.383,
-      "val_mae": 2.314,
+      "train_loss": 0.23356,
+      "val_loss": 0.21442,
+      "train_mae": 2.387,
+      "val_mae": 2.301,
       "iteration": 2
     },
     {
       "epoch": 5,
-      "train_loss": 0.23187,
-      "val_loss": 0.21673,
-      "train_mae": 2.378,
-      "val_mae": 2.302,
+      "train_loss": 0.23272,
+      "val_loss": 0.21928,
+      "train_mae": 2.383,
+      "val_mae": 2.326,
       "iteration": 3
     },
     {
       "epoch": 6,
-      "train_loss": 0.23079,
-      "val_loss": 0.21777,
-      "train_mae": 2.372,
-      "val_mae": 2.321,
-      "iteration": 3
-    },
-    {
-      "epoch": 7,
-      "train_loss": 0.23072,
-      "val_loss": 0.22498,
-      "train_mae": 2.371,
-      "val_mae": 2.352,
-      "iteration": 4
-    },
-    {
-      "epoch": 8,
-      "train_loss": 0.2298,
-      "val_loss": 0.21542,
-      "train_mae": 2.367,
-      "val_mae": 2.303,
-      "iteration": 4
-    },
-    {
-      "epoch": 9,
-      "train_loss": 0.22973,
-      "val_loss": 0.22203,
-      "train_mae": 2.366,
-      "val_mae": 2.328,
-      "iteration": 4
-    },
-    {
-      "epoch": 10,
-      "train_loss": 0.22936,
-      "val_loss": 0.21919,
-      "train_mae": 2.364,
-      "val_mae": 2.319,
-      "iteration": 4
-    },
-    {
-      "epoch": 11,
-      "train_loss": 0.22905,
-      "val_loss": 0.21569,
-      "train_mae": 2.363,
-      "val_mae": 2.305,
-      "iteration": 4
-    },
-    {
-      "epoch": 12,
-      "train_loss": 0.22894,
-      "val_loss": 0.21345,
-      "train_mae": 2.363,
-      "val_mae": 2.286,
-      "iteration": 5
-    },
-    {
-      "epoch": 13,
-      "train_loss": 0.2284,
-      "val_loss": 0.22414,
-      "train_mae": 2.36,
-      "val_mae": 2.334,
-      "iteration": 5
-    },
-    {
-      "epoch": 14,
-      "train_loss": 0.22851,
-      "val_loss": 0.22036,
-      "train_mae": 2.36,
-      "val_mae": 2.327,
-      "iteration": 5
-    },
-    {
-      "epoch": 15,
-      "train_loss": 0.228,
-      "val_loss": 0.21579,
-      "train_mae": 2.358,
-      "val_mae": 2.303,
-      "iteration": 5
-    },
-    {
-      "epoch": 16,
-      "train_loss": 0.22771,
-      "val_loss": 0.21479,
-      "train_mae": 2.356,
-      "val_mae": 2.29,
-      "iteration": 5
-    },
-    {
-      "epoch": 17,
-      "train_loss": 0.22771,
-      "val_loss": 0.21761,
-      "train_mae": 2.356,
+      "train_loss": 0.23213,
+      "val_loss": 0.21828,
+      "train_mae": 2.38,
       "val_mae": 2.32,
-      "iteration": 6
-    },
-    {
-      "epoch": 18,
-      "train_loss": 0.22738,
-      "val_loss": 0.21807,
-      "train_mae": 2.353,
-      "val_mae": 2.311,
-      "iteration": 6
-    },
-    {
-      "epoch": 19,
-      "train_loss": 0.2275,
-      "val_loss": 0.2199,
-      "train_mae": 2.355,
-      "val_mae": 2.322,
-      "iteration": 6
-    },
-    {
-      "epoch": 20,
-      "train_loss": 0.22668,
-      "val_loss": 0.2196,
-      "train_mae": 2.35,
-      "val_mae": 2.326,
-      "iteration": 6
-    },
-    {
-      "epoch": 21,
-      "train_loss": 0.22684,
-      "val_loss": 0.21558,
-      "train_mae": 2.351,
-      "val_mae": 2.3,
-      "iteration": 6
+      "iteration": 3
     }
   ],
   "iterations": [
     {
       "iteration": 1,
       "epochs_run": 2,
-      "val_mae_c": 2.332,
+      "val_mae_c": 2.335,
       "status": "Iteration 1 completed. Continuing training..."
     },
     {
       "iteration": 2,
       "epochs_run": 4,
-      "val_mae_c": 2.314,
+      "val_mae_c": 2.301,
       "status": "Iteration 2 completed. Continuing training..."
     },
     {
       "iteration": 3,
       "epochs_run": 6,
-      "val_mae_c": 2.321,
+      "val_mae_c": 2.32,
       "status": "Iteration 3 completed. Continuing training..."
-    },
-    {
-      "iteration": 4,
-      "epochs_run": 11,
-      "val_mae_c": 2.305,
-      "status": "Iteration 4 completed. Continuing training..."
-    },
-    {
-      "iteration": 5,
-      "epochs_run": 16,
-      "val_mae_c": 2.29,
-      "status": "Iteration 5 completed. Continuing training..."
-    },
-    {
-      "iteration": 6,
-      "epochs_run": 21,
-      "val_mae_c": 2.3,
-      "status": "Iteration 6 completed. Continuing training..."
     }
   ],
-  "total_epochs": 21,
-  "best_epoch": 12,
-  "best_val_mae": 2.286,
+  "total_epochs": 6,
+  "best_epoch": 4,
+  "best_val_mae": 2.301,
   "target_mae": 1.0,
-  "final_status": "Underfitting / Limit Reached (Best Val MAE 2.29\u00b0C > target 1.0\u00b0C after 21 epochs)",
+  "final_status": "Underfitting / Limit Reached (Best Val MAE 2.30\u00b0C > target 1.0\u00b0C after 6 epochs)",
   "is_adequate": false,
   "overfitting_detected": false,
   "underfitting_detected": true

@@ -2,50 +2,50 @@
   "epochs": [
     {
       "epoch": 1,
-      "train_loss": 0.25676,
-      "val_loss": 0.21821,
-      "train_mae": 2.508,
-      "val_mae": 2.323,
+      "train_loss": 0.23678,
+      "val_loss": 0.21831,
+      "train_mae": 2.399,
+      "val_mae": 2.314,
       "iteration": 1
     },
     {
       "epoch": 2,
-      "train_loss": 0.23735,
-      "val_loss": 0.22052,
-      "train_mae": 2.409,
-      "val_mae": 2.335,
+      "train_loss": 0.22255,
+      "val_loss": 0.22027,
+      "train_mae": 2.323,
+      "val_mae": 2.32,
       "iteration": 1
     },
     {
       "epoch": 3,
-      "train_loss": 0.23505,
-      "val_loss": 0.21838,
-      "train_mae": 2.396,
-      "val_mae": 2.315,
+      "train_loss": 0.21768,
+      "val_loss": 0.22068,
+      "train_mae": 2.299,
+      "val_mae": 2.322,
       "iteration": 2
     },
     {
       "epoch": 4,
-      "train_loss": 0.23356,
-      "val_loss": 0.21442,
-      "train_mae": 2.387,
-      "val_mae": 2.301,
+      "train_loss": 0.21368,
+      "val_loss": 0.21692,
+      "train_mae": 2.278,
+      "val_mae": 2.3,
       "iteration": 2
     },
     {
       "epoch": 5,
-      "train_loss": 0.23272,
-      "val_loss": 0.21928,
-      "train_mae": 2.383,
-      "val_mae": 2.326,
+      "train_loss": 0.21056,
+      "val_loss": 0.22159,
+      "train_mae": 2.262,
+      "val_mae": 2.331,
       "iteration": 3
     },
     {
       "epoch": 6,
-      "train_loss": 0.23213,
-      "val_loss": 0.21828,
-      "train_mae": 2.38,
-      "val_mae": 2.32,
+      "train_loss": 0.20731,
+      "val_loss": 0.21998,
+      "train_mae": 2.246,
+      "val_mae": 2.318,
       "iteration": 3
     }
   ],
@@ -53,25 +53,25 @@
     {
       "iteration": 1,
       "epochs_run": 2,
-      "val_mae_c": 2.335,
+      "val_mae_c": 2.32,
       "status": "Iteration 1 completed. Continuing training..."
     },
     {
       "iteration": 2,
       "epochs_run": 4,
-      "val_mae_c": 2.301,
+      "val_mae_c": 2.3,
       "status": "Iteration 2 completed. Continuing training..."
     },
     {
       "iteration": 3,
       "epochs_run": 6,
-      "val_mae_c": 2.32,
+      "val_mae_c": 2.318,
       "status": "Iteration 3 completed. Continuing training..."
     }
   ],
   "total_epochs": 6,
   "best_epoch": 4,
-  "best_val_mae": 2.301,
+  "best_val_mae": 2.3,
   "target_mae": 1.0,
   "final_status": "Underfitting / Limit Reached (Best Val MAE 2.30\u00b0C > target 1.0\u00b0C after 6 epochs)",
   "is_adequate": false,

@@ -241,6 +241,66 @@ def test_gbdt_checkpoint_and_selective_models():
 
         print("✓ test_gbdt_checkpoint_and_selective_models passed!")
 
+def test_cnn_dense_linear_models():
+    from forecast_system.models.cnn_weather_forecast import CNNForecastModel
+    from forecast_system.models.dense_weather_forecast import DenseForecastModel
+    from forecast_system.models.linear_weather_forecast import LinearForecastModel
+
+    dates = pd.date_range('2024-01-01', periods=300, freq='1h')
+    temps = 15.0 + 5.0 * np.sin(np.linspace(0, 10 * np.pi, 300))
+    dews = temps - 4.0
+    df = pd.DataFrame({'temp': temps, 'dew': dews}, index=dates)
+
+    X, Y_h, Y_s = create_features_and_targets(df)
+
+    # 1. Test CNN Model
+    cnn_model = CNNForecastModel(filters=16, kernel_size=3)
+    cnn_model.fit_restartable(
+        X_train=X.iloc[:200],
+        Y_hourly_train=Y_h.iloc[:200],
+        X_val=X.iloc[200:],
+        Y_hourly_val=Y_h.iloc[200:],
+        epochs_per_iter=1,
+        max_iters=1,
+        verbose=0
+    )
+    p_h, p_s = cnn_model.predict(X.iloc[200:])
+    assert p_h.shape == (len(X.iloc[200:]), 24)
+    assert p_s.shape == (len(X.iloc[200:]), 3)
+
+    # 2. Test Dense Model
+    dense_model = DenseForecastModel(hidden_units=(32, 16))
+    dense_model.fit_restartable(
+        X_train=X.iloc[:200],
+        Y_hourly_train=Y_h.iloc[:200],
+        X_val=X.iloc[200:],
+        Y_hourly_val=Y_h.iloc[200:],
+        epochs_per_iter=1,
+        max_iters=1,
+        verbose=0
+    )
+    p_h, p_s = dense_model.predict(X.iloc[200:])
+    assert p_h.shape == (len(X.iloc[200:]), 24)
+    assert p_s.shape == (len(X.iloc[200:]), 3)
+
+    # 3. Test Linear Model
+    linear_model = LinearForecastModel()
+    linear_model.fit_restartable(
+        X_train=X.iloc[:200],
+        Y_hourly_train=Y_h.iloc[:200],
+        X_val=X.iloc[200:],
+        Y_hourly_val=Y_h.iloc[200:],
+        epochs_per_iter=1,
+        max_iters=1,
+        verbose=0
+    )
+    p_h, p_s = linear_model.predict(X.iloc[200:])
+    assert p_h.shape == (len(X.iloc[200:]), 24)
+    assert p_s.shape == (len(X.iloc[200:]), 3)
+
+
+    print("✓ test_cnn_dense_linear_models passed!")
+
 if __name__ == '__main__':
     test_parse_hourly_temp()
     test_config_loading()
@@ -251,4 +311,6 @@ if __name__ == '__main__':
     test_reset_and_resume_modes()
     test_cli_argument_parsing()
     test_gbdt_checkpoint_and_selective_models()
+    test_cnn_dense_linear_models()
     print("ALL UNIT TESTS PASSED SUCCESSFULLY!")
+

@@ -11,7 +11,12 @@ from forecast_system.data.feature_engineering import create_features_and_targets
 from forecast_system.data.quality_analysis import export_data_properties_json
 from forecast_system.models.baselines import PersistenceForecast, ClimatologyForecast
 from forecast_system.models.ml_models import GradientBoostingForecast, RidgeLinearForecast
-from forecast_system.models.deep_learning import LSTMForecastModel
+from forecast_system.models.deep_learning import (
+    LSTMForecastModel,
+    CNNForecastModel,
+    DenseForecastModel,
+    LinearForecastModel
+)
 from forecast_system.evaluation.evaluator import ForecastEvaluator
 
 def run_pipeline(config_path=None):
@@ -27,9 +32,12 @@ def run_pipeline(config_path=None):
     max_iters = cfg['optimization']['max_iters']
     target_mae = cfg['optimization']['target_mae']
 
-    dl_cfg = cfg['deep_learning']
-    ml_cfg = cfg['machine_learning']
-    dq_cfg = cfg['data_quality']
+    dl_cfg = cfg.get('deep_learning', {})
+    cnn_cfg = cfg.get('cnn', {})
+    dense_cfg = cfg.get('dense', {})
+    linear_cfg = cfg.get('linear', {})
+    ml_cfg = cfg.get('machine_learning', {})
+    dq_cfg = cfg.get('data_quality', {})
 
     is_reset = (mode.lower() == "reset")
 
@@ -147,11 +155,94 @@ def run_pipeline(config_path=None):
             reset=is_reset
         )
 
-        # Fallback copy for root report directory
         with open(output_dir / "training_history.json", 'w') as f:
             json.dump(lstm_model.training_history, f, indent=2)
 
         models_dict['Deep Learning (LSTM)'] = lstm_model
+
+    # 6. Convolutional Neural Network (CNN)
+    if run_all or 'cnn' in selected_models:
+        cnn_model = CNNForecastModel(
+            filters=cnn_cfg.get('filters', 64),
+            kernel_size=cnn_cfg.get('kernel_size', 3),
+            dropout=cnn_cfg.get('dropout', 0.2),
+            learning_rate=cnn_cfg.get('learning_rate', 0.001)
+        )
+        checkpoint_file = outputs_dir / "cnn_checkpoint.keras"
+        history_file = outputs_dir / "cnn_training_history.json"
+
+        cnn_model.fit_restartable(
+            X_train=X_train,
+            Y_hourly_train=Y_h_train,
+            Y_summary_train=Y_s_train,
+            X_val=X_val,
+            Y_hourly_val=Y_h_val,
+            epochs_per_iter=epochs_per_iter,
+            target_mae=target_mae,
+            max_iters=max_iters,
+            batch_size=cnn_cfg.get('batch_size', 64),
+            patience=cnn_cfg.get('patience', 10),
+            verbose=0,
+            checkpoint_path=str(checkpoint_file),
+            history_path=str(history_file),
+            reset=is_reset
+        )
+        models_dict['Convolutional Neural Network (CNN)'] = cnn_model
+
+    # 7. Dense Neural Network
+    if run_all or 'dense' in selected_models:
+        dense_model = DenseForecastModel(
+            hidden_units=dense_cfg.get('hidden_units', (128, 64)),
+            dropout=dense_cfg.get('dropout', 0.2),
+            learning_rate=dense_cfg.get('learning_rate', 0.001)
+        )
+        checkpoint_file = outputs_dir / "dense_checkpoint.keras"
+        history_file = outputs_dir / "dense_training_history.json"
+
+        dense_model.fit_restartable(
+            X_train=X_train,
+            Y_hourly_train=Y_h_train,
+            Y_summary_train=Y_s_train,
+            X_val=X_val,
+            Y_hourly_val=Y_h_val,
+            epochs_per_iter=epochs_per_iter,
+            target_mae=target_mae,
+            max_iters=max_iters,
+            batch_size=dense_cfg.get('batch_size', 64),
+            patience=dense_cfg.get('patience', 10),
+            verbose=0,
+            checkpoint_path=str(checkpoint_file),
+            history_path=str(history_file),
+            reset=is_reset
+        )
+        models_dict['Dense Neural Network'] = dense_model
+
+    # 8. Linear Neural Network
+    if run_all or 'linear' in selected_models or 'linear_nn' in selected_models:
+        linear_model = LinearForecastModel(
+            learning_rate=linear_cfg.get('learning_rate', 0.001)
+        )
+        checkpoint_file = outputs_dir / "linear_checkpoint.keras"
+        history_file = outputs_dir / "linear_training_history.json"
+
+        linear_model.fit_restartable(
+            X_train=X_train,
+            Y_hourly_train=Y_h_train,
+            Y_summary_train=Y_s_train,
+            X_val=X_val,
+            Y_hourly_val=Y_h_val,
+            epochs_per_iter=epochs_per_iter,
+            target_mae=target_mae,
+            max_iters=max_iters,
+            batch_size=linear_cfg.get('batch_size', 64),
+            patience=linear_cfg.get('patience', 10),
+            verbose=0,
+            checkpoint_path=str(checkpoint_file),
+            history_path=str(history_file),
+            reset=is_reset
+        )
+        models_dict['Linear Neural Network'] = linear_model
+
 
     print("\n========================================================")
     print("STEP 4: EVALUATING OUT-OF-SAMPLE PRECISION & ACCURACY")

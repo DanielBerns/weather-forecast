@@ -6,14 +6,12 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
-class LSTMForecastModel:
+class LinearForecastModel:
     """
-    LSTM Multi-Step Neural Network Model for 24h temperature forecasting.
+    Linear Neural Network Model for 24h temperature forecasting.
     Supports restartable (resume/update) and reset (scratch) chunked training modes.
     """
-    def __init__(self, units=64, dropout=0.2, learning_rate=0.001):
-        self.units = units
-        self.dropout = dropout
+    def __init__(self, learning_rate=0.001):
         self.learning_rate = learning_rate
         self.model = None
         self.mean_X = None
@@ -25,13 +23,13 @@ class LSTMForecastModel:
     def _build_model(self, input_dim, output_dim=24):
         model = keras.Sequential([
             layers.Input(shape=(input_dim,)),
-            layers.Dense(128, activation='relu'),
-            layers.Dropout(self.dropout),
-            layers.Dense(self.units, activation='relu'),
-            layers.Dropout(self.dropout),
-            layers.Dense(output_dim)
+            layers.Dense(output_dim, kernel_initializer=tf.initializers.zeros())
         ])
-        model.compile(optimizer=keras.optimizers.Adam(learning_rate=self.learning_rate), loss='mse', metrics=['mae'])
+        model.compile(
+            optimizer=keras.optimizers.Adam(learning_rate=self.learning_rate),
+            loss='mse',
+            metrics=['mae']
+        )
         return model
 
     def fit_restartable(
@@ -51,14 +49,6 @@ class LSTMForecastModel:
         history_path=None,
         reset=False
     ):
-        """
-        Executes chunked training in small epoch blocks.
-
-        Args:
-            reset (bool): If True, erases existing checkpoints and starts training from scratch.
-                          If False, loads existing weights and training history, appending new iterations.
-        """
-        # 1. Scalers setup
         if self.mean_X is None:
             self.mean_X = X_train.mean(axis=0)
             self.std_X = X_train.std(axis=0).replace(0, 1.0)
@@ -82,9 +72,8 @@ class LSTMForecastModel:
         best_weights = None
         best_epoch = 0
 
-        # Handle RESET vs RESTART logic
         if reset:
-            print("\n🔄 [RESET MODE] Wiping past model weights and clearing training history. Starting from scratch...", flush=True)
+            print("\n🔄 [RESET MODE] Wiping past Linear Neural Network model weights and training history. Starting from scratch...", flush=True)
             if checkpoint_path and os.path.exists(checkpoint_path):
                 try:
                     os.remove(checkpoint_path)
@@ -97,7 +86,7 @@ class LSTMForecastModel:
                     pass
             self.model = self._build_model(input_dim=X_train.shape[1], output_dim=24)
         else:
-            print("\n🔁 [RESUME MODE] Checking for existing saved weights and training history to update...", flush=True)
+            print("\n🔁 [RESUME MODE] Checking for existing saved weights and training history for Linear Neural Network model...", flush=True)
             if self.model is None:
                 self.model = self._build_model(input_dim=X_train.shape[1], output_dim=24)
                 if checkpoint_path and os.path.exists(checkpoint_path):
@@ -130,7 +119,7 @@ class LSTMForecastModel:
         start_iter_idx = len(iteration_logs) + 1
         end_iter_idx = start_iter_idx + max_iters - 1
 
-        print(f"\n--- Running Training (Target MAE < {target_mae}°C | Epochs per iter: {epochs_per_iter} | Iterations: {start_iter_idx} to {end_iter_idx}) ---", flush=True)
+        print(f"\n--- Running Linear Neural Network Training (Target MAE < {target_mae}°C | Epochs per iter: {epochs_per_iter} | Iterations: {start_iter_idx} to {end_iter_idx}) ---", flush=True)
 
         for iter_idx in range(start_iter_idx, end_iter_idx + 1):
             hist = self.model.fit(
@@ -143,7 +132,6 @@ class LSTMForecastModel:
                 validation_split=0.1 if val_data is None else 0.0
             )
 
-            # Record per-epoch logs for this iteration
             iter_train_loss = hist.history.get('loss', [])
             iter_val_loss = hist.history.get('val_loss', [])
             iter_train_mae = hist.history.get('mae', [])
@@ -176,7 +164,6 @@ class LSTMForecastModel:
 
             print(f"Iteration {iter_idx}/{end_iter_idx} (Total Epochs: {total_epochs}) -> Val MAE: {current_val_mae_c:.2f}°C (Best: {best_val_mae_c:.2f}°C)", flush=True)
 
-            # Check stopping & diagnostic conditions
             if best_val_mae_c <= target_mae:
                 is_adequate = True
                 final_status = f"Adequate Level Reached (Val MAE {best_val_mae_c:.2f}°C <= {target_mae}°C)"
@@ -189,7 +176,6 @@ class LSTMForecastModel:
                 })
                 break
 
-            # Check Overfitting Condition (Val loss increasing significantly while Train loss drops)
             if len(epoch_logs) >= 6:
                 min_recent_val = min([e['val_loss'] for e in epoch_logs])
                 if current_val_loss > 1.25 * min_recent_val and current_train_loss < epoch_logs[0]['train_loss']:
@@ -211,18 +197,15 @@ class LSTMForecastModel:
                 'status': f"Iteration {iter_idx} completed. Continuing training..."
             })
 
-        # If loop completed without adequate performance or overfitting halt
         if not is_adequate and not overfitting_detected:
             if best_val_mae_c > target_mae:
                 underfitting_detected = True
                 final_status = f"Underfitting / Limit Reached (Best Val MAE {best_val_mae_c:.2f}°C > target {target_mae}°C after {total_epochs} epochs)"
                 print(f"ℹ️ {final_status}", flush=True)
 
-        # Restore best weights if available
         if best_weights is not None:
             self.model.set_weights(best_weights)
 
-        # Save checkpoint if requested
         if checkpoint_path is not None:
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
             self.model.save(checkpoint_path)
@@ -250,9 +233,6 @@ class LSTMForecastModel:
         return self
 
     def fit(self, X_train, Y_hourly_train, Y_summary_train=None, epochs=15, batch_size=64, verbose=0):
-        """
-        Legacy fit wrapper calling fit_restartable.
-        """
         epochs_per_iter = max(1, epochs // 3)
         return self.fit_restartable(
             X_train=X_train,
@@ -267,7 +247,8 @@ class LSTMForecastModel:
 
     def predict(self, X):
         X_scaled = (X - self.mean_X) / self.std_X
-        pred_scaled = self.model.predict(X_scaled.values, verbose=0)
+        X_arr = np.asarray(X_scaled.values, dtype=np.float32)
+        pred_scaled = self.model(X_arr, training=False).numpy()
         pred_hourly = pred_scaled * self.std_Y + self.mean_Y
 
         pred_summary = np.column_stack([
@@ -277,10 +258,4 @@ class LSTMForecastModel:
         ])
 
         return pred_hourly, pred_summary
-
-
-# Re-export other deep learning / neural network models for convenience
-from forecast_system.models.cnn_weather_forecast import CNNForecastModel
-from forecast_system.models.dense_weather_forecast import DenseForecastModel
-from forecast_system.models.linear_weather_forecast import LinearForecastModel
 

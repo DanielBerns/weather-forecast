@@ -21,6 +21,26 @@ DEFAULT_CONFIG = {
         'patience': 10,
         'dropout': 0.2
     },
+    'cnn': {
+        'filters': 64,
+        'kernel_size': 3,
+        'learning_rate': 0.001,
+        'batch_size': 64,
+        'patience': 10,
+        'dropout': 0.2
+    },
+    'dense': {
+        'hidden_units': [128, 64],
+        'learning_rate': 0.001,
+        'batch_size': 64,
+        'patience': 10,
+        'dropout': 0.2
+    },
+    'linear': {
+        'learning_rate': 0.001,
+        'batch_size': 64,
+        'patience': 10
+    },
     'machine_learning': {
         'ridge_alpha': 1.0,
         'gbdt_max_iter': 40,
@@ -50,7 +70,7 @@ def load_config(config_path=None):
     dict
         Merged configuration dictionary.
     """
-    config = dict(DEFAULT_CONFIG)
+    config = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULT_CONFIG.items()}
     
     if config_path is None:
         default_path = Path("config.yaml")
@@ -72,3 +92,4 @@ def load_config(config_path=None):
             print(f"Warning: Could not parse config file {config_path} ({e}). Using defaults.", flush=True)
             
     return config
+

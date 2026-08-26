@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 
+# Directories
+report/outputs/
+report/plots/

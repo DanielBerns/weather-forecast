@@ -7,7 +7,7 @@ pipeline:
 
 optimization:
   target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
-  epochs_per_iter: 5           # Number of training epochs executed per iteration block
+  epochs_per_iter: 2           # Number of training epochs executed per iteration block
   max_iters: 3                 # Maximum number of restartable training iteration passes
 
 deep_learning:
