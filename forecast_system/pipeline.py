@@ -85,12 +85,24 @@ def run_pipeline(config_path=None):
     Y_h_train_full = pd.concat([Y_h_train, Y_h_val])
     Y_s_train_full = pd.concat([Y_s_train, Y_s_val])
 
-    # Parse models selection filter
-    selected_models = cfg['pipeline'].get('models', ['all'])
-    if isinstance(selected_models, str):
-        selected_models = [selected_models]
-    selected_models = [m.lower() for m in selected_models]
-    run_all = 'all' in selected_models
+    # Parse models selection filter & enabled flags
+    lstm_cfg = {**cfg.get('deep_learning', {}), **cfg.get('lstm', {})}
+    cnn_cfg = cfg.get('cnn', {})
+    dense_cfg = cfg.get('dense', {})
+    linear_cfg = cfg.get('linear', {})
+    ridge_cfg = {**cfg.get('machine_learning', {}), **cfg.get('ridge', {})}
+    gbdt_cfg = {**cfg.get('machine_learning', {}), **cfg.get('gbdt', {})}
+    dq_cfg = cfg.get('data_quality', {})
+
+    def is_enabled(model_name):
+        sec = cfg.get(model_name, {})
+        if not isinstance(sec, dict):
+            if model_name == 'lstm' and isinstance(cfg.get('deep_learning'), dict):
+                sec = cfg.get('deep_learning')
+            else:
+                sec = {}
+        return bool(sec.get('enabled', True))
+
 
     print("\n========================================================")
     print(f"STEP 3: TRAINING & MODEL FITTING (MODE: {mode.upper()})")
@@ -99,41 +111,41 @@ def run_pipeline(config_path=None):
     models_dict = {}
 
     # 1. Persistence Baseline
-    if run_all or 'persistence' in selected_models:
+    if is_enabled('persistence'):
         models_dict['Persistence Baseline'] = PersistenceForecast().fit(X_train_full, Y_h_train_full, Y_s_train_full)
 
     # 2. Climatology Baseline
-    if run_all or 'climatology' in selected_models:
+    if is_enabled('climatology'):
         models_dict['Climatology Baseline'] = ClimatologyForecast().fit(df_combined.loc[df_combined.index < '2026-01-01'])
 
     # 3. Ridge Linear
-    if run_all or 'ridge' in selected_models:
+    if is_enabled('ridge'):
         models_dict['Ridge Regression'] = RidgeLinearForecast(
-            alpha=ml_cfg.get('ridge_alpha', 1.0)
+            alpha=ridge_cfg.get('alpha', ridge_cfg.get('ridge_alpha', 1.0))
         ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
 
     # 4. HistGradientBoosting (GBDT) - Resumable checkpointing
-    if run_all or 'gbdt' in selected_models or 'gradient_boosting' in selected_models or 'gbt' in selected_models:
+    if is_enabled('gbdt'):
         gbdt_checkpoint_file = outputs_dir / "gbdt_checkpoint.joblib"
         if not is_reset and gbdt_checkpoint_file.exists():
             print(f"✓ [RESUME MODE] Loading pre-trained Gradient Boosted Trees model from {gbdt_checkpoint_file}")
             gbdt_model = GradientBoostingForecast.load(gbdt_checkpoint_file)
         else:
             gbdt_model = GradientBoostingForecast(
-                max_iter=ml_cfg.get('gbdt_max_iter', 40),
-                learning_rate=ml_cfg.get('gbdt_learning_rate', 0.1),
-                random_state=ml_cfg.get('gbdt_random_state', 42)
+                max_iter=gbdt_cfg.get('max_iter', gbdt_cfg.get('gbdt_max_iter', 40)),
+                learning_rate=gbdt_cfg.get('learning_rate', gbdt_cfg.get('gbdt_learning_rate', 0.1)),
+                random_state=gbdt_cfg.get('random_state', gbdt_cfg.get('gbdt_random_state', 42))
             ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
             gbdt_model.save(gbdt_checkpoint_file)
             print(f"Saved Gradient Boosted Trees checkpoint to {gbdt_checkpoint_file}")
         models_dict['Gradient Boosted Trees'] = gbdt_model
 
     # 5. Deep Learning (LSTM) - Resumable/Resetable Training
-    if run_all or 'lstm' in selected_models or 'deep_learning' in selected_models:
+    if is_enabled('lstm'):
         lstm_model = LSTMForecastModel(
-            units=dl_cfg.get('units', 64),
-            dropout=dl_cfg.get('dropout', 0.2),
-            learning_rate=dl_cfg.get('learning_rate', 0.001)
+            units=lstm_cfg.get('units', 64),
+            dropout=lstm_cfg.get('dropout', 0.2),
+            learning_rate=lstm_cfg.get('learning_rate', 0.001)
         )
         checkpoint_file = outputs_dir / "lstm_checkpoint.keras"
         history_file = outputs_dir / "training_history.json"
@@ -147,8 +159,8 @@ def run_pipeline(config_path=None):
             epochs_per_iter=epochs_per_iter,
             target_mae=target_mae,
             max_iters=max_iters,
-            batch_size=dl_cfg.get('batch_size', 64),
-            patience=dl_cfg.get('patience', 10),
+            batch_size=lstm_cfg.get('batch_size', 64),
+            patience=lstm_cfg.get('patience', 10),
             verbose=0,
             checkpoint_path=str(checkpoint_file),
             history_path=str(history_file),
@@ -161,7 +173,7 @@ def run_pipeline(config_path=None):
         models_dict['Deep Learning (LSTM)'] = lstm_model
 
     # 6. Convolutional Neural Network (CNN)
-    if run_all or 'cnn' in selected_models:
+    if is_enabled('cnn'):
         cnn_model = CNNForecastModel(
             filters=cnn_cfg.get('filters', 64),
             kernel_size=cnn_cfg.get('kernel_size', 3),
@@ -190,7 +202,7 @@ def run_pipeline(config_path=None):
         models_dict['Convolutional Neural Network (CNN)'] = cnn_model
 
     # 7. Dense Neural Network
-    if run_all or 'dense' in selected_models:
+    if is_enabled('dense'):
         dense_model = DenseForecastModel(
             hidden_units=dense_cfg.get('hidden_units', (128, 64)),
             dropout=dense_cfg.get('dropout', 0.2),
@@ -218,7 +230,7 @@ def run_pipeline(config_path=None):
         models_dict['Dense Neural Network'] = dense_model
 
     # 8. Linear Neural Network
-    if run_all or 'linear' in selected_models or 'linear_nn' in selected_models:
+    if is_enabled('linear'):
         linear_model = LinearForecastModel(
             learning_rate=linear_cfg.get('learning_rate', 0.001)
         )
@@ -242,6 +254,7 @@ def run_pipeline(config_path=None):
             reset=is_reset
         )
         models_dict['Linear Neural Network'] = linear_model
+
 
 
     print("\n========================================================")

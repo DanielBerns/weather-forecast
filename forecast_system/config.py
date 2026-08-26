@@ -5,16 +5,33 @@ from pathlib import Path
 DEFAULT_CONFIG = {
     'pipeline': {
         'mode': 'resume',
-        'models': ['all'],
         'output_dir': 'report',
         'data_dir': 'data'
     },
+
     'optimization': {
         'target_mae': 1.0,
         'epochs_per_iter': 5,
         'max_iters': 3
     },
-    'deep_learning': {
+    'persistence': {
+        'enabled': True
+    },
+    'climatology': {
+        'enabled': True
+    },
+    'ridge': {
+        'enabled': True,
+        'alpha': 1.0
+    },
+    'gbdt': {
+        'enabled': True,
+        'max_iter': 40,
+        'learning_rate': 0.1,
+        'random_state': 42
+    },
+    'lstm': {
+        'enabled': True,
         'units': 64,
         'learning_rate': 0.001,
         'batch_size': 64,
@@ -22,6 +39,7 @@ DEFAULT_CONFIG = {
         'dropout': 0.2
     },
     'cnn': {
+        'enabled': True,
         'filters': 64,
         'kernel_size': 3,
         'learning_rate': 0.001,
@@ -30,6 +48,7 @@ DEFAULT_CONFIG = {
         'dropout': 0.2
     },
     'dense': {
+        'enabled': True,
         'hidden_units': [128, 64],
         'learning_rate': 0.001,
         'batch_size': 64,
@@ -37,9 +56,18 @@ DEFAULT_CONFIG = {
         'dropout': 0.2
     },
     'linear': {
+        'enabled': True,
         'learning_rate': 0.001,
         'batch_size': 64,
         'patience': 10
+    },
+    'deep_learning': {
+        'enabled': True,
+        'units': 64,
+        'learning_rate': 0.001,
+        'batch_size': 64,
+        'patience': 10,
+        'dropout': 0.2
     },
     'machine_learning': {
         'ridge_alpha': 1.0,
@@ -55,6 +83,7 @@ DEFAULT_CONFIG = {
         'sample_test_size': 200
     }
 }
+
 
 def load_config(config_path=None):
     """

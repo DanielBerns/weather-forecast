@@ -1,27 +1,64 @@
-# Next-Day Weather Forecast & Pipeline Configuration
+# Next-Day Weather Forecast & Pipeline Configuration (Reset Mode)
 
 pipeline:
   mode: "reset"              # Execution mode: "resume" (load weights & append history) or "reset" (scratch clean)
   output_dir: "report"         # Target directory for reports, web UI assets, and outputs
   data_dir: "data"             # Directory containing input CSV datasets
 
+
 optimization:
   target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
   epochs_per_iter: 2           # Number of training epochs executed per iteration block
   max_iters: 3                 # Maximum number of restartable training iteration passes
 
-deep_learning:
-  units: 64                    # Number of hidden units in LSTM layers
+# --- Model Specific Parametrizations & Run Flags ---
+
+persistence:
+  enabled: true                # Enable/disable Persistence baseline model
+
+climatology:
+  enabled: true                # Enable/disable Climatology baseline model
+
+ridge:
+  enabled: true                # Enable/disable Ridge Linear Regression model
+  alpha: 1.0                   # L2 regularization strength for Ridge regression
+
+gbdt:
+  enabled: true                # Enable/disable Gradient Boosted Trees (HistGradientBoosting) model
+  max_iter: 40                 # Maximum iterations/trees for HistGradientBoosting
+  learning_rate: 0.1           # Learning rate for gradient boosting
+  random_state: 42             # Random state seed for reproducibility
+
+lstm:
+  enabled: true                # Enable/disable LSTM Deep Learning model
+  units: 64                    # Number of hidden units in LSTM layer
   learning_rate: 0.001         # Optimizer learning rate (Adam)
   batch_size: 64               # Batch size for mini-batch training
   patience: 10                 # Early stopping patience in epochs
   dropout: 0.2                 # Dropout rate for regularization
 
-machine_learning:
-  ridge_alpha: 1.0             # L2 regularization strength for Ridge regression
-  gbdt_max_iter: 40            # Maximum iterations/trees for HistGradientBoosting
-  gbdt_learning_rate: 0.1      # Learning rate for gradient boosting
-  gbdt_random_state: 42        # Random state seed for reproducibility
+cnn:
+  enabled: true                # Enable/disable Convolutional Neural Network (CNN) model
+  filters: 64                  # Number of 1D convolutional filters
+  kernel_size: 3               # Kernel size for 1D convolution
+  learning_rate: 0.001         # Optimizer learning rate (Adam)
+  batch_size: 64               # Batch size for mini-batch training
+  patience: 10                 # Early stopping patience in epochs
+  dropout: 0.2                 # Dropout rate for regularization
+
+dense:
+  enabled: true                # Enable/disable Dense Neural Network model
+  hidden_units: [128, 64]      # Layer dimensions for dense hidden layers
+  learning_rate: 0.001         # Optimizer learning rate (Adam)
+  batch_size: 64               # Batch size for mini-batch training
+  patience: 10                 # Early stopping patience in epochs
+  dropout: 0.2                 # Dropout rate for regularization
+
+linear:
+  enabled: true                # Enable/disable Linear Neural Network model
+  learning_rate: 0.001         # Optimizer learning rate (Adam)
+  batch_size: 64               # Batch size for mini-batch training
+  patience: 10                 # Early stopping patience in epochs
 
 data_quality:
   temp_min: -30.0              # Physical minimum temperature threshold (°C)

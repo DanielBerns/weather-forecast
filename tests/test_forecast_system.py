@@ -301,6 +301,36 @@ def test_cnn_dense_linear_models():
 
     print("✓ test_cnn_dense_linear_models passed!")
 
+def test_enabled_flags_and_full_config():
+    with tempfile.NamedTemporaryFile('w', suffix='.yaml', delete=False) as f:
+        f.write("""
+pipeline:
+  mode: "reset"
+
+cnn:
+  enabled: false
+  filters: 32
+dense:
+  enabled: true
+  hidden_units: [64, 32]
+linear:
+  enabled: false
+""")
+
+        tmp_name = f.name
+
+    try:
+        cfg = load_config(tmp_name)
+        assert cfg['cnn']['enabled'] is False
+        assert cfg['cnn']['filters'] == 32
+        assert cfg['dense']['enabled'] is True
+        assert cfg['dense']['hidden_units'] == [64, 32]
+        assert cfg['linear']['enabled'] is False
+        print("✓ test_enabled_flags_and_full_config passed!")
+    finally:
+        if os.path.exists(tmp_name):
+            os.remove(tmp_name)
+
 if __name__ == '__main__':
     test_parse_hourly_temp()
     test_config_loading()
@@ -312,5 +342,7 @@ if __name__ == '__main__':
     test_cli_argument_parsing()
     test_gbdt_checkpoint_and_selective_models()
     test_cnn_dense_linear_models()
+    test_enabled_flags_and_full_config()
     print("ALL UNIT TESTS PASSED SUCCESSFULLY!")
+
 
