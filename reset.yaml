@@ -1,0 +1,31 @@
+# Next-Day Weather Forecast & Pipeline Configuration
+
+pipeline:
+  mode: "reset"              # Execution mode: "resume" (load weights & append history) or "reset" (scratch clean)
+  output_dir: "report"         # Target directory for reports, web UI assets, and outputs
+  data_dir: "data"             # Directory containing input CSV datasets
+
+optimization:
+  target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
+  epochs_per_iter: 5           # Number of training epochs executed per iteration block
+  max_iters: 3                 # Maximum number of restartable training iteration passes
+
+deep_learning:
+  units: 64                    # Number of hidden units in LSTM layers
+  learning_rate: 0.001         # Optimizer learning rate (Adam)
+  batch_size: 64               # Batch size for mini-batch training
+  patience: 10                 # Early stopping patience in epochs
+  dropout: 0.2                 # Dropout rate for regularization
+
+machine_learning:
+  ridge_alpha: 1.0             # L2 regularization strength for Ridge regression
+  gbdt_max_iter: 40            # Maximum iterations/trees for HistGradientBoosting
+  gbdt_learning_rate: 0.1      # Learning rate for gradient boosting
+  gbdt_random_state: 42        # Random state seed for reproducibility
+
+data_quality:
+  temp_min: -30.0              # Physical minimum temperature threshold (°C)
+  temp_max: 50.0               # Physical maximum temperature threshold (°C)
+  dew_min: -40.0               # Physical minimum dew point threshold (°C)
+  dew_max: 40.0                # Physical maximum dew point threshold (°C)
+  sample_test_size: 200        # Number of sample test predictions to export for web UI visualization
