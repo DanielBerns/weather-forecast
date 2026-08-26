@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "weather-forecast"
 version = "0.1.0"
@@ -25,3 +21,7 @@ forecast-pipeline = "forecast_system.pipeline:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
