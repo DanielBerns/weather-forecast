@@ -1,0 +1,162 @@
+{
+  "Persistence Baseline": {
+    "model_name": "Persistence Baseline",
+    "hourly_24h": {
+      "mae": 3.8243,
+      "rmse": 4.9818,
+      "mape": 49.59,
+      "r2": 0.5513,
+      "acc_1.0C": 25.64,
+      "acc_2.0C": 40.72,
+      "directional_precision": 0.0,
+      "directional_recall": 0.0,
+      "directional_f1": 0.0
+    },
+    "tmax": {
+      "mae": 5.1182,
+      "rmse": 6.4186,
+      "mape": 33.67,
+      "r2": 0.3067
+    },
+    "tmin": {
+      "mae": 4.9901,
+      "rmse": 6.2204,
+      "mape": 110.12,
+      "r2": -0.0149
+    },
+    "tavg": {
+      "mae": 2.9943,
+      "rmse": 3.7954,
+      "mape": 35.53,
+      "r2": 0.6792
+    }
+  },
+  "Climatology Baseline": {
+    "model_name": "Climatology Baseline",
+    "hourly_24h": {
+      "mae": 3.4557,
+      "rmse": 4.2526,
+      "mape": 56.33,
+      "r2": 0.673,
+      "acc_1.0C": 17.17,
+      "acc_2.0C": 33.59,
+      "directional_precision": 62.51,
+      "directional_recall": 70.02,
+      "directional_f1": 66.05
+    },
+    "tmax": {
+      "mae": 3.783,
+      "rmse": 4.6087,
+      "mape": 28.38,
+      "r2": 0.6426
+    },
+    "tmin": {
+      "mae": 3.6011,
+      "rmse": 4.3796,
+      "mape": 104.86,
+      "r2": 0.4969
+    },
+    "tavg": {
+      "mae": 2.9743,
+      "rmse": 3.6256,
+      "mape": 48.59,
+      "r2": 0.7072
+    }
+  },
+  "Ridge Regression": {
+    "model_name": "Ridge Regression",
+    "hourly_24h": {
+      "mae": 2.5432,
+      "rmse": 3.2831,
+      "mape": 36.6,
+      "r2": 0.8051,
+      "acc_1.0C": 27.49,
+      "acc_2.0C": 49.36,
+      "directional_precision": 63.67,
+      "directional_recall": 73.94,
+      "directional_f1": 68.42
+    },
+    "tmax": {
+      "mae": 2.5313,
+      "rmse": 3.192,
+      "mape": 18.68,
+      "r2": 0.8286
+    },
+    "tmin": {
+      "mae": 2.2069,
+      "rmse": 2.7515,
+      "mape": 51.15,
+      "r2": 0.8014
+    },
+    "tavg": {
+      "mae": 1.978,
+      "rmse": 2.4796,
+      "mape": 26.41,
+      "r2": 0.8631
+    }
+  },
+  "Gradient Boosted Trees": {
+    "model_name": "Gradient Boosted Trees",
+    "hourly_24h": {
+      "mae": 2.4885,
+      "rmse": 3.2319,
+      "mape": 36.37,
+      "r2": 0.8112,
+      "acc_1.0C": 28.75,
+      "acc_2.0C": 50.72,
+      "directional_precision": 61.99,
+      "directional_recall": 75.44,
+      "directional_f1": 68.06
+    },
+    "tmax": {
+      "mae": 2.5113,
+      "rmse": 3.1454,
+      "mape": 18.69,
+      "r2": 0.8335
+    },
+    "tmin": {
+      "mae": 2.1417,
+      "rmse": 2.6957,
+      "mape": 50.6,
+      "r2": 0.8094
+    },
+    "tavg": {
+      "mae": 1.9904,
+      "rmse": 2.4755,
+      "mape": 25.92,
+      "r2": 0.8635
+    }
+  },
+  "Deep Learning (LSTM)": {
+    "model_name": "Deep Learning (LSTM)",
+    "hourly_24h": {
+      "mae": 2.5271,
+      "rmse": 3.2792,
+      "mape": 39.67,
+      "r2": 0.8056,
+      "acc_1.0C": 27.87,
+      "acc_2.0C": 50.09,
+      "directional_precision": 59.81,
+      "directional_recall": 77.18,
+      "directional_f1": 67.39
+    },
+    "tmax": {
+      "mae": 2.558,
+      "rmse": 3.3318,
+      "mape": 18.17,
+      "r2": 0.8132
+    },
+    "tmin": {
+      "mae": 2.918,
+      "rmse": 3.6195,
+      "mape": 80.29,
+      "r2": 0.6564
+    },
+    "tavg": {
+      "mae": 2.035,
+      "rmse": 2.5352,
+      "mape": 29.48,
+      "r2": 0.8569
+    }
+  }
+}

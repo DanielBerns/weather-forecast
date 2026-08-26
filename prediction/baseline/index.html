@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Histogram Visualization</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-panel">
+            <h1 class="gradient-text">Hourly 2D Histogram</h1>
+            <p class="subtitle">Temperature vs Dew Point over a Typical Year</p>
+        </header>
+
+        <main class="visualization-container">
+            <div class="canvas-wrapper glass-panel">
+                <canvas id="histogramCanvas" width="600" height="600"></canvas>
+                <div class="axis-label x-axis" id="xAxisLabel">Temperature (C)</div>
+                <div class="axis-label y-axis" id="yAxisLabel">Dew Point (C)</div>
+                <!-- Min/max labels to be populated via JS -->
+                <div class="tick-label x-min" id="xMinLabel"></div>
+                <div class="tick-label x-max" id="xMaxLabel"></div>
+                <div class="tick-label y-min" id="yMinLabel"></div>
+                <div class="tick-label y-max" id="yMaxLabel"></div>
+            </div>
+
+            <div class="controls-container glass-panel">
+                <div class="time-display">
+                    <h2 id="currentDateDisplay" class="gradient-text">Jan 01, 00:00</h2>
+                    <p id="currentHourInfo">Hour 0 / 8759</p>
+                </div>
+
+                <div class="playback-controls">
+                    <button id="playPauseBtn" class="control-btn">
+                        <!-- Play Icon -->
+                        <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <!-- Pause Icon (hidden by default) -->
+                        <svg id="pauseIcon" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <div class="slider-wrapper">
+                        <input type="range" id="timeSlider" min="0" max="8759" value="0" step="1">
+                    </div>
+                </div>
+
+                <div class="color-scale">
+                    <span class="scale-label">0</span>
+                    <div class="gradient-bar"></div>
+                    <span class="scale-label" id="maxCountLabel">Max</span>
+                </div>
+                <div class="controls-settings">
+                    <label>
+                        <input type="checkbox" id="accumulateCheckbox"> Accumulate History
+                    </label>
+                    <label>
+                        Playback Speed:
+                        <select id="speedSelect">
+                            <option value="100">Slow (10fps)</option>
+                            <option value="33" selected>Normal (30fps)</option>
+                            <option value="16">Fast (60fps)</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

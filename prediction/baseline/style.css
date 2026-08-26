@@ -1,0 +1,204 @@
+:root {
+    --bg-main: #0f172a;
+    --bg-panel: rgba(30, 41, 59, 0.7);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #38bdf8;
+    --accent-hover: #0ea5e9;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.app-container {
+    max-width: 1000px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.glass-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+header {
+    text-align: center;
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, #38bdf8, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+.visualization-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.canvas-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem; /* Space for labels */
+}
+
+canvas {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    image-rendering: pixelated;
+}
+
+.axis-label {
+    position: absolute;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.x-axis {
+    bottom: 1rem;
+}
+
+.y-axis {
+    left: 1rem;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+.tick-label {
+    position: absolute;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.x-min { bottom: 1.5rem; left: 3rem; }
+.x-max { bottom: 1.5rem; right: 3rem; }
+.y-min { left: 2rem; bottom: 3rem; }
+.y-max { left: 2rem; top: 3rem; }
+
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.time-display h2 {
+    font-size: 2rem;
+    margin-bottom: 0.2rem;
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.control-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.control-btn:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+}
+
+.slider-wrapper {
+    flex-grow: 1;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+}
+
+.color-scale {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.gradient-bar {
+    flex-grow: 1;
+    height: 12px;
+    border-radius: 6px;
+    /* We'll define this gradient in CSS or JS, e.g. blue -> cyan -> yellow -> red */
+    background: linear-gradient(to right, #000033, #0000ff, #00ffff, #ffff00, #ff0000);
+}
+
+.scale-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.controls-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.controls-settings label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+select {
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: 1px solid var(--border-color);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+}
+
+@media (max-width: 800px) {
+    .visualization-container {
+        grid-template-columns: 1fr;
+    }
+}
