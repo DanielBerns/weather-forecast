@@ -19,8 +19,9 @@ dependencies = [
 [project.scripts]
 forecast-pipeline = "forecast_system.pipeline:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.uv.build-backend]
+module-root = ""
+module-name = "forecast_system"
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
