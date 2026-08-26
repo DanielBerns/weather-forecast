@@ -4,6 +4,8 @@ pipeline:
   mode: "resume"              # Execution mode: "resume" (load weights & append history) or "reset" (scratch clean)
   output_dir: "report"         # Target directory for reports, web UI assets, and outputs
   data_dir: "data"             # Directory containing input CSV datasets
+  models:
+    - "lstm"
 
 optimization:
   target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
@@ -12,7 +14,7 @@ optimization:
 
 deep_learning:
   units: 64                    # Number of hidden units in LSTM layers
-  learning_rate: 0.001         # Optimizer learning rate (Adam)
+  learning_rate: 0.0005        # Optimizer learning rate (Adam)
   batch_size: 64               # Batch size for mini-batch training
   patience: 10                 # Early stopping patience in epochs
   dropout: 0.2                 # Dropout rate for regularization
