@@ -1,12 +1,14 @@
 from pathlib import Path
 import pandas as pd
 from .preprocessor import clean_hourly_dataframe
+from .cleaner import clean_weather_dataset
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 
 def load_combined_dataset(data_dir=DATA_DIR):
     """
     Loads all datasets from data_dir, standardizes them, and merges into a continuous hourly dataframe.
+    Applies data quality cleaning recommendations.
     Returns:
         combined_df: pd.DataFrame with index='timestamp' and columns=['temp', 'dew']
     """
@@ -45,13 +47,8 @@ def load_combined_dataset(data_dir=DATA_DIR):
     combined_df = combined_df.groupby(combined_df.index).mean()
     combined_df = combined_df.sort_index()
 
-    # Final reindex and small interpolation
-    full_idx = pd.date_range(start=combined_df.index.min(), end=combined_df.index.max(), freq='1h')
-    combined_df = combined_df.reindex(full_idx)
-    combined_df.index.name = 'timestamp'
-
-    combined_df['temp'] = combined_df['temp'].interpolate(method='time', limit=6)
-    combined_df['dew'] = combined_df['dew'].interpolate(method='time', limit=6)
+    # Apply data quality cleaner recommendations
+    combined_df = clean_weather_dataset(combined_df, temp_min=-15.0, temp_max=42.0, dew_min=-30.0, dew_max=25.0, interp_limit=6)
 
     return combined_df
 

@@ -103,11 +103,16 @@ class GradientBoostingForecast:
 
         for stage_max_iter in range(stage_step, self.max_iter + 1, stage_step):
             # Update max_iter & learning_rate safely before/after fit
-            if hasattr(self.hourly_model, 'estimators_'):
-                for est in self.hourly_model.estimators_:
-                    est.max_iter = stage_max_iter
-                    est.learning_rate = current_lr
-            else:
+            try:
+                estimators = getattr(self.hourly_model, 'estimators_', None)
+                if estimators is not None:
+                    for est in estimators:
+                        est.max_iter = stage_max_iter
+                        est.learning_rate = current_lr
+                else:
+                    self.hourly_model.estimator.max_iter = stage_max_iter
+                    self.hourly_model.estimator.learning_rate = current_lr
+            except AttributeError:
                 self.hourly_model.estimator.max_iter = stage_max_iter
                 self.hourly_model.estimator.learning_rate = current_lr
 
@@ -273,16 +278,24 @@ class RidgeLinearForecast:
 
         for epoch in range(1, max_epochs + 1):
             # Update learning rate safely before/after fit
-            if hasattr(self.hourly_model, 'estimators_'):
-                for est in self.hourly_model.estimators_:
-                    est.eta0 = current_lr
-            else:
+            try:
+                estimators_h = getattr(self.hourly_model, 'estimators_', None)
+                if estimators_h is not None:
+                    for est in estimators_h:
+                        est.eta0 = current_lr
+                else:
+                    self.hourly_model.estimator.eta0 = current_lr
+            except AttributeError:
                 self.hourly_model.estimator.eta0 = current_lr
 
-            if hasattr(self.summary_model, 'estimators_'):
-                for est in self.summary_model.estimators_:
-                    est.eta0 = current_lr
-            else:
+            try:
+                estimators_s = getattr(self.summary_model, 'estimators_', None)
+                if estimators_s is not None:
+                    for est in estimators_s:
+                        est.eta0 = current_lr
+                else:
+                    self.summary_model.estimator.eta0 = current_lr
+            except AttributeError:
                 self.summary_model.estimator.eta0 = current_lr
 
             self.hourly_model.fit(X_tr_sc, Y_h_tr_sc)

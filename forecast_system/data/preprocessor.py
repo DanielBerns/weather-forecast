@@ -58,9 +58,14 @@ def clean_hourly_dataframe(df, is_modern=False):
         df['temp'] = df['TMP'].apply(parse_hourly_temp)
         df['dew'] = df['DEW'].apply(parse_hourly_temp)
 
-    # Filter out physical extremes for Comodoro Rivadavia
-    df.loc[(df['temp'] < -30) | (df['temp'] > 50), 'temp'] = np.nan
-    df.loc[(df['dew'] < -40) | (df['dew'] > 40), 'dew'] = np.nan
+    # Filter out physical extremes for Comodoro Rivadavia (-15C to 42C for temp, -30C to 25C for dew)
+    df.loc[(df['temp'] < -15.0) | (df['temp'] > 42.0), 'temp'] = np.nan
+    df.loc[(df['dew'] < -30.0) | (df['dew'] > 25.0), 'dew'] = np.nan
+
+    # Enforce thermodynamic physical law: Dew <= Temp
+    dew_above_temp = df['dew'] > df['temp']
+    if dew_above_temp.any():
+        df.loc[dew_above_temp, 'dew'] = df.loc[dew_above_temp, 'temp']
 
     # Drop rows where both temp and dew are missing
     df = df.dropna(subset=['temp', 'dew'], how='all')
@@ -80,8 +85,13 @@ def clean_hourly_dataframe(df, is_modern=False):
         hourly_df = hourly_df.reindex(full_idx)
         hourly_df.index.name = 'timestamp'
 
-        # Linear interpolation for gaps up to 3 hours
-        hourly_df['temp'] = hourly_df['temp'].interpolate(method='time', limit=3)
-        hourly_df['dew'] = hourly_df['dew'].interpolate(method='time', limit=3)
+        # Linear interpolation for gaps up to 6 hours
+        hourly_df['temp'] = hourly_df['temp'].interpolate(method='time', limit=6)
+        hourly_df['dew'] = hourly_df['dew'].interpolate(method='time', limit=6)
+
+        # Re-verify thermodynamic physical law after interpolation
+        d_above_t = hourly_df['dew'] > hourly_df['temp']
+        if d_above_t.any():
+            hourly_df.loc[d_above_t, 'dew'] = hourly_df.loc[d_above_t, 'temp']
 
     return hourly_df
