@@ -66,97 +66,193 @@
   "Ridge Regression": {
     "model_name": "Ridge Regression",
     "hourly_24h": {
-      "mae": 2.5432,
-      "rmse": 3.2831,
-      "mape": 36.6,
-      "r2": 0.8051,
-      "acc_1.0C": 27.49,
-      "acc_2.0C": 49.36,
-      "directional_precision": 63.67,
-      "directional_recall": 73.94,
-      "directional_f1": 68.42
+      "mae": 3.2972,
+      "rmse": 4.1609,
+      "mape": 54.36,
+      "r2": 0.687,
+      "acc_1.0C": 19.95,
+      "acc_2.0C": 38.01,
+      "directional_precision": 58.61,
+      "directional_recall": 74.73,
+      "directional_f1": 65.7
     },
     "tmax": {
-      "mae": 2.5313,
-      "rmse": 3.192,
-      "mape": 18.68,
-      "r2": 0.8286
+      "mae": 2.9191,
+      "rmse": 3.659,
+      "mape": 21.74,
+      "r2": 0.7747
     },
     "tmin": {
-      "mae": 2.2069,
-      "rmse": 2.7515,
-      "mape": 51.15,
-      "r2": 0.8014
+      "mae": 2.7333,
+      "rmse": 3.37,
+      "mape": 68.96,
+      "r2": 0.7021
     },
     "tavg": {
-      "mae": 1.978,
-      "rmse": 2.4796,
-      "mape": 26.41,
-      "r2": 0.8631
+      "mae": 2.5739,
+      "rmse": 3.143,
+      "mape": 40.56,
+      "r2": 0.78
     }
   },
   "Gradient Boosted Trees": {
     "model_name": "Gradient Boosted Trees",
     "hourly_24h": {
-      "mae": 2.4885,
-      "rmse": 3.2319,
-      "mape": 36.37,
-      "r2": 0.8112,
-      "acc_1.0C": 28.75,
-      "acc_2.0C": 50.72,
-      "directional_precision": 61.99,
-      "directional_recall": 75.44,
-      "directional_f1": 68.06
+      "mae": 3.6762,
+      "rmse": 4.6389,
+      "mape": 67.11,
+      "r2": 0.611,
+      "acc_1.0C": 18.01,
+      "acc_2.0C": 34.81,
+      "directional_precision": 56.9,
+      "directional_recall": 68.32,
+      "directional_f1": 62.09
     },
     "tmax": {
-      "mae": 2.5113,
-      "rmse": 3.1454,
-      "mape": 18.69,
-      "r2": 0.8335
+      "mae": 2.524,
+      "rmse": 3.1601,
+      "mape": 19.05,
+      "r2": 0.832
     },
     "tmin": {
-      "mae": 2.1417,
-      "rmse": 2.6957,
-      "mape": 50.6,
-      "r2": 0.8094
+      "mae": 2.1814,
+      "rmse": 2.7367,
+      "mape": 52.07,
+      "r2": 0.8036
     },
     "tavg": {
-      "mae": 1.9904,
-      "rmse": 2.4755,
-      "mape": 25.92,
-      "r2": 0.8635
+      "mae": 2.0275,
+      "rmse": 2.5166,
+      "mape": 27.15,
+      "r2": 0.8589
     }
   },
   "Deep Learning (LSTM)": {
     "model_name": "Deep Learning (LSTM)",
     "hourly_24h": {
-      "mae": 2.5271,
-      "rmse": 3.2792,
-      "mape": 39.67,
-      "r2": 0.8056,
-      "acc_1.0C": 27.87,
-      "acc_2.0C": 50.09,
-      "directional_precision": 59.81,
-      "directional_recall": 77.18,
-      "directional_f1": 67.39
+      "mae": 2.4794,
+      "rmse": 3.2279,
+      "mape": 37.47,
+      "r2": 0.8116,
+      "acc_1.0C": 28.27,
+      "acc_2.0C": 50.99,
+      "directional_precision": 60.74,
+      "directional_recall": 74.88,
+      "directional_f1": 67.07
     },
     "tmax": {
-      "mae": 2.558,
-      "rmse": 3.3318,
-      "mape": 18.17,
-      "r2": 0.8132
+      "mae": 2.639,
+      "rmse": 3.4664,
+      "mape": 17.19,
+      "r2": 0.7978
     },
     "tmin": {
-      "mae": 2.918,
-      "rmse": 3.6195,
-      "mape": 80.29,
-      "r2": 0.6564
+      "mae": 2.8699,
+      "rmse": 3.5646,
+      "mape": 78.45,
+      "r2": 0.6667
     },
     "tavg": {
-      "mae": 2.035,
-      "rmse": 2.5352,
-      "mape": 29.48,
-      "r2": 0.8569
+      "mae": 1.972,
+      "rmse": 2.4648,
+      "mape": 26.69,
+      "r2": 0.8647
+    }
+  },
+  "Convolutional Neural Network (CNN)": {
+    "model_name": "Convolutional Neural Network (CNN)",
+    "hourly_24h": {
+      "mae": 2.523,
+      "rmse": 3.2879,
+      "mape": 37.13,
+      "r2": 0.8046,
+      "acc_1.0C": 27.69,
+      "acc_2.0C": 50.41,
+      "directional_precision": 61.26,
+      "directional_recall": 72.02,
+      "directional_f1": 66.2
+    },
+    "tmax": {
+      "mae": 2.6638,
+      "rmse": 3.4939,
+      "mape": 17.28,
+      "r2": 0.7946
+    },
+    "tmin": {
+      "mae": 2.8333,
+      "rmse": 3.522,
+      "mape": 76.06,
+      "r2": 0.6746
+    },
+    "tavg": {
+      "mae": 2.0313,
+      "rmse": 2.5294,
+      "mape": 25.96,
+      "r2": 0.8575
+    }
+  },
+  "Dense Neural Network": {
+    "model_name": "Dense Neural Network",
+    "hourly_24h": {
+      "mae": 2.4875,
+      "rmse": 3.2268,
+      "mape": 36.83,
+      "r2": 0.8118,
+      "acc_1.0C": 28.01,
+      "acc_2.0C": 50.64,
+      "directional_precision": 61.75,
+      "directional_recall": 74.5,
+      "directional_f1": 67.53
+    },
+    "tmax": {
+      "mae": 2.6395,
+      "rmse": 3.4429,
+      "mape": 17.02,
+      "r2": 0.8005
+    },
+    "tmin": {
+      "mae": 2.8543,
+      "rmse": 3.5417,
+      "mape": 76.35,
+      "r2": 0.671
+    },
+    "tavg": {
+      "mae": 1.9717,
+      "rmse": 2.4625,
+      "mape": 25.83,
+      "r2": 0.8649
+    }
+  },
+  "Linear Neural Network": {
+    "model_name": "Linear Neural Network",
+    "hourly_24h": {
+      "mae": 2.5449,
+      "rmse": 3.2827,
+      "mape": 36.53,
+      "r2": 0.8052,
+      "acc_1.0C": 27.35,
+      "acc_2.0C": 49.35,
+      "directional_precision": 63.74,
+      "directional_recall": 73.82,
+      "directional_f1": 68.41
+    },
+    "tmax": {
+      "mae": 2.616,
+      "rmse": 3.4213,
+      "mape": 18.28,
+      "r2": 0.803
+    },
+    "tmin": {
+      "mae": 2.5187,
+      "rmse": 3.1783,
+      "mape": 61.24,
+      "r2": 0.7351
+    },
+    "tavg": {
+      "mae": 1.976,
+      "rmse": 2.4755,
+      "mape": 26.21,
+      "r2": 0.8635
     }
   }
 }

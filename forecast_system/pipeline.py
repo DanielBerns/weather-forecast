@@ -60,14 +60,6 @@ def run_pipeline(config_path=None):
         dew_min=dq_cfg.get('dew_min', -40.0),
         dew_max=dq_cfg.get('dew_max', 40.0)
     )
-    export_data_properties_json(
-        X,
-        output_dir / "data_properties.json",
-        temp_min=dq_cfg.get('temp_min', -30.0),
-        temp_max=dq_cfg.get('temp_max', 50.0),
-        dew_min=dq_cfg.get('dew_min', -40.0),
-        dew_max=dq_cfg.get('dew_max', 40.0)
-    )  # fallback copy
 
     # Splits
     train_mask = X.index < '2025-01-01'
@@ -86,6 +78,15 @@ def run_pipeline(config_path=None):
     Y_s_train_full = pd.concat([Y_s_train, Y_s_val])
 
     # Parse models selection filter & enabled flags
+    opt_cfg = cfg.get('optimization', {})
+    default_decay_enabled = opt_cfg.get('lr_decay_enabled', True)
+    default_decay_policy = opt_cfg.get('lr_decay_policy', 'plateau')
+    default_decay_factor = opt_cfg.get('lr_decay_factor', 0.5)
+    default_decay_patience = opt_cfg.get('lr_decay_patience', 2)
+    default_lr_min = opt_cfg.get('lr_min', 1e-6)
+    default_lr_threshold = opt_cfg.get('lr_decay_threshold', 1e-4)
+    default_cooldown = opt_cfg.get('lr_cooldown', 0)
+
     lstm_cfg = {**cfg.get('deep_learning', {}), **cfg.get('lstm', {})}
     cnn_cfg = cfg.get('cnn', {})
     dense_cfg = cfg.get('dense', {})
@@ -120,9 +121,21 @@ def run_pipeline(config_path=None):
 
     # 3. Ridge Linear
     if is_enabled('ridge'):
-        models_dict['Ridge Regression'] = RidgeLinearForecast(
-            alpha=ridge_cfg.get('alpha', ridge_cfg.get('ridge_alpha', 1.0))
-        ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
+        ridge_model = RidgeLinearForecast(
+            alpha=ridge_cfg.get('alpha', ridge_cfg.get('ridge_alpha', 1.0)),
+            learning_rate=ridge_cfg.get('learning_rate', 0.01),
+            lr_decay_enabled=ridge_cfg.get('lr_decay_enabled', default_decay_enabled),
+            lr_decay_policy=ridge_cfg.get('lr_decay_policy', default_decay_policy),
+            lr_decay_factor=ridge_cfg.get('lr_decay_factor', default_decay_factor),
+            lr_decay_patience=ridge_cfg.get('lr_decay_patience', default_decay_patience),
+            min_lr=ridge_cfg.get('lr_min', default_lr_min),
+            min_delta=ridge_cfg.get('lr_decay_threshold', default_lr_threshold),
+            cooldown=ridge_cfg.get('lr_cooldown', default_cooldown)
+        ).fit(X_train, Y_h_train, Y_s_train, X_val=X_val, Y_hourly_val=Y_h_val, Y_summary_val=Y_s_val)
+        models_dict['Ridge Regression'] = ridge_model
+        if hasattr(ridge_model, 'training_history') and ridge_model.training_history:
+            with open(outputs_dir / "ridge_training_history.json", 'w') as f:
+                json.dump(ridge_model.training_history, f, indent=2)
 
     # 4. HistGradientBoosting (GBDT) - Resumable checkpointing
     if is_enabled('gbdt'):
@@ -134,10 +147,20 @@ def run_pipeline(config_path=None):
             gbdt_model = GradientBoostingForecast(
                 max_iter=gbdt_cfg.get('max_iter', gbdt_cfg.get('gbdt_max_iter', 40)),
                 learning_rate=gbdt_cfg.get('learning_rate', gbdt_cfg.get('gbdt_learning_rate', 0.1)),
-                random_state=gbdt_cfg.get('random_state', gbdt_cfg.get('gbdt_random_state', 42))
-            ).fit(X_train_full, Y_h_train_full, Y_s_train_full)
+                random_state=gbdt_cfg.get('random_state', gbdt_cfg.get('gbdt_random_state', 42)),
+                lr_decay_enabled=gbdt_cfg.get('lr_decay_enabled', default_decay_enabled),
+                lr_decay_policy=gbdt_cfg.get('lr_decay_policy', default_decay_policy),
+                lr_decay_factor=gbdt_cfg.get('lr_decay_factor', default_decay_factor),
+                lr_decay_patience=gbdt_cfg.get('lr_decay_patience', default_decay_patience),
+                min_lr=gbdt_cfg.get('lr_min', 1e-5),
+                min_delta=gbdt_cfg.get('lr_decay_threshold', default_lr_threshold),
+                cooldown=gbdt_cfg.get('lr_cooldown', default_cooldown)
+            ).fit(X_train, Y_h_train, Y_s_train, X_val=X_val, Y_hourly_val=Y_h_val, Y_summary_val=Y_s_val)
             gbdt_model.save(gbdt_checkpoint_file)
             print(f"Saved Gradient Boosted Trees checkpoint to {gbdt_checkpoint_file}")
+        if hasattr(gbdt_model, 'training_history') and gbdt_model.training_history:
+            with open(outputs_dir / "gbdt_training_history.json", 'w') as f:
+                json.dump(gbdt_model.training_history, f, indent=2)
         models_dict['Gradient Boosted Trees'] = gbdt_model
 
     # 5. Deep Learning (LSTM) - Resumable/Resetable Training
@@ -145,7 +168,14 @@ def run_pipeline(config_path=None):
         lstm_model = LSTMForecastModel(
             units=lstm_cfg.get('units', 64),
             dropout=lstm_cfg.get('dropout', 0.2),
-            learning_rate=lstm_cfg.get('learning_rate', 0.001)
+            learning_rate=lstm_cfg.get('learning_rate', 0.001),
+            lr_decay_enabled=lstm_cfg.get('lr_decay_enabled', default_decay_enabled),
+            lr_decay_policy=lstm_cfg.get('lr_decay_policy', default_decay_policy),
+            lr_decay_factor=lstm_cfg.get('lr_decay_factor', default_decay_factor),
+            lr_decay_patience=lstm_cfg.get('lr_decay_patience', default_decay_patience),
+            lr_min=lstm_cfg.get('lr_min', default_lr_min),
+            lr_decay_threshold=lstm_cfg.get('lr_decay_threshold', default_lr_threshold),
+            lr_cooldown=lstm_cfg.get('lr_cooldown', default_cooldown)
         )
         checkpoint_file = outputs_dir / "lstm_checkpoint.keras"
         history_file = outputs_dir / "training_history.json"
@@ -167,7 +197,9 @@ def run_pipeline(config_path=None):
             reset=is_reset
         )
 
-        with open(output_dir / "training_history.json", 'w') as f:
+        with open(outputs_dir / "training_history.json", 'w') as f:
+            json.dump(lstm_model.training_history, f, indent=2)
+        with open(outputs_dir / "lstm_training_history.json", 'w') as f:
             json.dump(lstm_model.training_history, f, indent=2)
 
         models_dict['Deep Learning (LSTM)'] = lstm_model
@@ -178,7 +210,14 @@ def run_pipeline(config_path=None):
             filters=cnn_cfg.get('filters', 64),
             kernel_size=cnn_cfg.get('kernel_size', 3),
             dropout=cnn_cfg.get('dropout', 0.2),
-            learning_rate=cnn_cfg.get('learning_rate', 0.001)
+            learning_rate=cnn_cfg.get('learning_rate', 0.001),
+            lr_decay_enabled=cnn_cfg.get('lr_decay_enabled', default_decay_enabled),
+            lr_decay_policy=cnn_cfg.get('lr_decay_policy', default_decay_policy),
+            lr_decay_factor=cnn_cfg.get('lr_decay_factor', default_decay_factor),
+            lr_decay_patience=cnn_cfg.get('lr_decay_patience', default_decay_patience),
+            lr_min=cnn_cfg.get('lr_min', default_lr_min),
+            lr_decay_threshold=cnn_cfg.get('lr_decay_threshold', default_lr_threshold),
+            lr_cooldown=cnn_cfg.get('lr_cooldown', default_cooldown)
         )
         checkpoint_file = outputs_dir / "cnn_checkpoint.keras"
         history_file = outputs_dir / "cnn_training_history.json"
@@ -206,7 +245,14 @@ def run_pipeline(config_path=None):
         dense_model = DenseForecastModel(
             hidden_units=dense_cfg.get('hidden_units', (128, 64)),
             dropout=dense_cfg.get('dropout', 0.2),
-            learning_rate=dense_cfg.get('learning_rate', 0.001)
+            learning_rate=dense_cfg.get('learning_rate', 0.001),
+            lr_decay_enabled=dense_cfg.get('lr_decay_enabled', default_decay_enabled),
+            lr_decay_policy=dense_cfg.get('lr_decay_policy', default_decay_policy),
+            lr_decay_factor=dense_cfg.get('lr_decay_factor', default_decay_factor),
+            lr_decay_patience=dense_cfg.get('lr_decay_patience', default_decay_patience),
+            lr_min=dense_cfg.get('lr_min', default_lr_min),
+            lr_decay_threshold=dense_cfg.get('lr_decay_threshold', default_lr_threshold),
+            lr_cooldown=dense_cfg.get('lr_cooldown', default_cooldown)
         )
         checkpoint_file = outputs_dir / "dense_checkpoint.keras"
         history_file = outputs_dir / "dense_training_history.json"
@@ -232,7 +278,14 @@ def run_pipeline(config_path=None):
     # 8. Linear Neural Network
     if is_enabled('linear'):
         linear_model = LinearForecastModel(
-            learning_rate=linear_cfg.get('learning_rate', 0.001)
+            learning_rate=linear_cfg.get('learning_rate', 0.001),
+            lr_decay_enabled=linear_cfg.get('lr_decay_enabled', default_decay_enabled),
+            lr_decay_policy=linear_cfg.get('lr_decay_policy', default_decay_policy),
+            lr_decay_factor=linear_cfg.get('lr_decay_factor', default_decay_factor),
+            lr_decay_patience=linear_cfg.get('lr_decay_patience', default_decay_patience),
+            lr_min=linear_cfg.get('lr_min', default_lr_min),
+            lr_decay_threshold=linear_cfg.get('lr_decay_threshold', default_lr_threshold),
+            lr_cooldown=linear_cfg.get('lr_cooldown', default_cooldown)
         )
         checkpoint_file = outputs_dir / "linear_checkpoint.keras"
         history_file = outputs_dir / "linear_training_history.json"
@@ -255,7 +308,14 @@ def run_pipeline(config_path=None):
         )
         models_dict['Linear Neural Network'] = linear_model
 
+    # Export Consolidated Training Histories for All Models
+    all_histories = {}
+    for name, model_inst in models_dict.items():
+        if hasattr(model_inst, 'training_history') and model_inst.training_history:
+            all_histories[name] = model_inst.training_history
 
+    with open(outputs_dir / "all_training_histories.json", 'w') as f:
+        json.dump(all_histories, f, indent=2)
 
     print("\n========================================================")
     print("STEP 4: EVALUATING OUT-OF-SAMPLE PRECISION & ACCURACY")
@@ -264,7 +324,6 @@ def run_pipeline(config_path=None):
     eval_results = evaluator.evaluate(X_test, Y_h_test, Y_s_test)
 
     evaluator.save_summary_json(outputs_dir / "model_evaluation_metrics.json")
-    evaluator.save_summary_json(output_dir / "model_evaluation_metrics.json")
 
     # Export a slice of test predictions for interactive visualization in report
     sample_size = min(dq_cfg.get('sample_test_size', 200), len(X_test))
@@ -291,9 +350,6 @@ def run_pipeline(config_path=None):
     time_series_export['last_timestamp'] = sample_indices[-1].strftime('%Y-%m-%d %H:%M')
 
     with open(outputs_dir / "test_predictions.json", 'w') as f:
-        json.dump(time_series_export, f, indent=2)
-
-    with open(output_dir / "test_predictions.json", 'w') as f:
         json.dump(time_series_export, f, indent=2)
 
     print(f"Exported test time series predictions to {outputs_dir / 'test_predictions.json'}")

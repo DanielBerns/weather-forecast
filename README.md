@@ -14,15 +14,19 @@ Weather analysis, multi-step 24-hour time-series temperature forecasting, resuma
    - Automated quality analysis across **Train ($\le$2024)**, **Validation (2025)**, and **Test (2026)** splits.
    - Detects NaNs, physical temperature/dew point anomalies (ranges [-30°C to 50°C], [-40°C to 40°C], dew &le; temp), and statistical IQR outliers.
    - Generates comparative distribution histograms and statistical summaries.
-4. **Resumable & Resetable Neural Network Training Engine**:
+4. **Configurable Learning Rate Decay Engine**:
+   - **Performance-Based Decay Policies**: Dynamically decays learning rate as a function of validation learning performance (monitoring `val_loss` or `val_mae`). Applies to all machine learning (`HistGradientBoosting`, `Ridge`) and deep learning (`LSTM`, `CNN`, `Dense`, `Linear`) models in `forecast_system`.
+   - **Policy Strategies**: Supports `"plateau"` (multiplicative factor), `"exponential_plateau"` (exponential scaling), and `"step_plateau"` (step subtraction).
+   - **Extensive Logging & Diagnostics**: Logs detailed epoch/stage metrics, stagnant counts, learning rate adjustments, and exports structured `lr_decay_events` to JSON training histories for post-execution analysis.
+5. **Resumable & Resetable Neural Network Training Engine**:
    - **Reset Mode (`--mode reset`)**: Erases all existing saved model checkpoints and training history, starting a clean training run from scratch.
    - **Resume Mode (`--mode resume`)**: Loads existing saved model weights (`lstm_checkpoint.keras`) and training history (`training_history.json`), continuing incremental training to further refine and improve model accuracy.
    - **Stopping Criteria**: Incremental epoch-block training (`epochs_per_iter`, default `5`) with target precision threshold (`target_mae < 1.0°C`).
    - **Fit Diagnostics**: Automated detection for **Overfitting** (halting early and restoring best weights) and **Underfitting** (triggering additional iteration passes).
-5. **Separation of Static Web Assets & Pipeline Outputs**:
+6. **Separation of Static Web Assets & Pipeline Outputs**:
    - Web application source files (`index.html`, `style.css`, `script.js`) remain in `report/`.
    - Generated model checkpoints and JSON metrics are saved separately into `report/outputs/`.
-6. **Dark-Mode Glassmorphic Tabbed Web Dashboard**:
+7. **Dark-Mode Glassmorphic Tabbed Web Dashboard**:
    - **Tab 1 (📊 Model Evaluation & Live Forecast Engine)**: Out-of-Sample Leaderboard, KPI cards, sequence profiles, and interactive forecast generator.
    - **Tab 2 (🔍 Data Quality & Split Analysis)**: Split breakdown cards, bad values/anomaly summary, statistics table, and Plotly comparative histograms.
    - **Tab 3 (🔄 Training Evolution & Fit Diagnostics)**: Fit status banner, MSE loss evolution curve per epoch, and MAE accuracy convergence vs target threshold.
@@ -60,6 +64,71 @@ uv run python -m forecast_system.pipeline -c config.yaml
 | Option | Choices / Default | Description |
 | :--- | :--- | :--- |
 | `-c`, `--config` | `config.yaml` (default if omitted) | Path to YAML configuration file |
+
+---
+
+## 📈 Learning Rate Decay Policy & Post-Execution Logging
+
+The system provides a configurable performance-based learning rate decay engine (`PerformanceLRDecayPolicy`) across all machine learning (`HistGradientBoosting`, `RidgeLinear`) and deep learning (`LSTM`, `CNN`, `Dense`, `Linear`) models in `forecast_system`.
+
+### Configuration Options & Parameters
+
+Learning rate decay behavior can be configured globally under the `optimization` block or customized for individual models in your YAML config file (`config.yaml`, `reset.yaml`, `resume.yaml`):
+
+| Parameter | Options / Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `lr_decay_enabled` | `boolean` | `true` | Enables or disables performance-based learning rate decay |
+| `lr_decay_policy` | `"plateau"`, `"exponential_plateau"`, `"step_plateau"` | `"plateau"` | Policy strategy: multiplicative factor, exponential decay, or step reduction |
+| `lr_decay_factor` | `float` (0.0 to 1.0) | `0.5` | Decay factor applied to learning rate upon performance plateau |
+| `lr_decay_patience` | `integer` ($\ge 1$) | `2` | Number of epochs/iterations without improvement before decaying LR |
+| `lr_min` | `float` | `0.000001` | Minimum lower bound floor for learning rate |
+| `lr_decay_threshold` | `float` | `0.0001` | Minimum delta change in monitored metric to qualify as an improvement |
+| `lr_cooldown` | `integer` ($\ge 0$) | `0` | Cooldown iterations after an LR reduction before resuming evaluation |
+
+### YAML Configuration Example (`config.yaml`)
+
+```yaml
+optimization:
+  target_mae: 1.0
+  epochs_per_iter: 5
+  max_iters: 3
+  lr_decay_enabled: true
+  lr_decay_policy: "plateau"   # Options: "plateau", "exponential_plateau", "step_plateau"
+  lr_decay_factor: 0.5         # Halves the learning rate on plateau
+  lr_decay_patience: 2         # Decays after 2 stagnant epochs/iterations
+  lr_min: 0.000001             # Minimum LR limit
+  lr_decay_threshold: 0.0001   # Minimum metric improvement threshold
+  lr_cooldown: 0
+
+lstm:
+  enabled: true
+  units: 64
+  learning_rate: 0.001
+  lr_decay_enabled: true
+  lr_decay_policy: "plateau"
+  lr_decay_factor: 0.5
+  lr_decay_patience: 2
+
+gbdt:
+  enabled: true
+  max_iter: 40
+  learning_rate: 0.1
+  lr_decay_enabled: true
+  lr_decay_policy: "plateau"
+  lr_decay_factor: 0.5
+  lr_decay_patience: 2
+```
+
+### Extensive Logging & Post-Execution Analysis
+
+The training engine outputs detailed diagnostic logs via standard Python `logging`:
+1. **Console & Log Traces**: Logs monitored metrics per epoch/iteration pass. When performance plateaus, a prominent log entry is emitted:
+   ```text
+   🔻 [LR DECAY TRIGGERED] [LSTMModel] Epoch 4: Learning rate reduced from 1.000000e-03 to 5.000000e-04! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+   ```
+2. **JSON History Export**: Structured training history files (`training_history.json`, `cnn_training_history.json`, `dense_training_history.json`, `linear_training_history.json`) record:
+   - Per-epoch active learning rates (`lr`).
+   - Structured `lr_decay_events` log containing timestamps, model names, step indices, old LR, new LR, and trigger reasons for post-execution visual and quantitative analysis.
 
 ---
 

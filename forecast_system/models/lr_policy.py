@@ -1,0 +1,219 @@
+import logging
+import time
+from typing import Dict, Any, Tuple, Optional
+import tensorflow as tf
+
+logger = logging.getLogger("forecast_system.lr_policy")
+
+class PerformanceLRDecayPolicy:
+    """
+    Configurable Policy for Learning Rate Decay as a function of Learning Performance.
+
+    Monitors a learning performance metric (e.g. validation loss or MAE) during model training.
+    When performance plateaus (fails to improve by at least min_delta over a specified patience window),
+    decays the learning rate according to the selected policy strategy.
+
+    Supported Policy Types:
+    -----------------------
+    - 'plateau': Multiplies current learning rate by `factor` (e.g. LR * 0.5).
+    - 'exponential_plateau': Exponentially decays learning rate based on decay step count.
+    - 'step_plateau': Subtracts a fixed step size (factor * initial_lr) from current learning rate.
+    """
+    def __init__(
+        self,
+        enabled: bool = True,
+        policy: str = 'plateau',
+        factor: float = 0.5,
+        patience: int = 2,
+        min_lr: float = 1e-6,
+        min_delta: float = 1e-4,
+        cooldown: int = 0,
+        monitor: str = 'val_loss',
+        mode: str = 'min',
+        initial_lr: Optional[float] = None
+    ):
+        self.enabled = enabled
+        self.policy = policy.lower() if policy else 'plateau'
+        self.factor = float(factor)
+        self.patience = int(patience)
+        self.min_lr = float(min_lr)
+        self.min_delta = float(min_delta)
+        self.cooldown = int(cooldown)
+        self.monitor = monitor
+        self.mode = mode.lower()
+        self.initial_lr = initial_lr
+
+        self.best_metric: float = float('inf') if self.mode == 'min' else float('-inf')
+        self.wait_count: int = 0
+        self.cooldown_counter: int = 0
+        self.decay_count: int = 0
+        self.decay_events: list = []
+
+    def reset(self, initial_lr: Optional[float] = None):
+        """Resets tracking state for a new training run."""
+        self.best_metric = float('inf') if self.mode == 'min' else float('-inf')
+        self.wait_count = 0
+        self.cooldown_counter = 0
+        self.decay_count = 0
+        self.decay_events = []
+        if initial_lr is not None:
+            self.initial_lr = initial_lr
+
+    def _is_improvement(self, current: float) -> bool:
+        if self.mode == 'min':
+            return current < (self.best_metric - self.min_delta)
+        else:
+            return current > (self.best_metric + self.min_delta)
+
+    def step(
+        self,
+        current_metric: float,
+        current_lr: float,
+        model_name: str = "Model",
+        step_idx: int = 0,
+        step_type: str = "Epoch"
+    ) -> Tuple[float, bool, Optional[Dict[str, Any]]]:
+        """
+        Evaluates current performance metric and computes updated learning rate.
+
+        Returns:
+            Tuple of (new_lr, lr_changed, event_details_dict)
+        """
+        if not self.enabled:
+            return current_lr, False, None
+
+        if self.initial_lr is None:
+            self.initial_lr = current_lr
+
+        if self.cooldown_counter > 0:
+            self.cooldown_counter -= 1
+            self.wait_count = 0
+            logger.debug(
+                f"[{model_name}] {step_type} {step_idx}: In LR decay cooldown ({self.cooldown_counter} steps left). "
+                f"Current LR: {current_lr:.6f}"
+            )
+            return current_lr, False, None
+
+        if self._is_improvement(current_metric):
+            old_best = self.best_metric
+            self.best_metric = current_metric
+            self.wait_count = 0
+            logger.debug(
+                f"[{model_name}] {step_type} {step_idx}: Performance improved ({self.monitor}: {old_best:.5f} -> {current_metric:.5f}). "
+                f"Reset wait count."
+            )
+            return current_lr, False, None
+
+        # Performance stagnated
+        self.wait_count += 1
+        logger.info(
+            f"[{model_name}] {step_type} {step_idx}: Performance metric '{self.monitor}' stagnated at {current_metric:.5f} "
+            f"(Best: {self.best_metric:.5f}). Wait count: {self.wait_count}/{self.patience}."
+        )
+
+        if self.wait_count >= self.patience:
+            # Trigger LR Decay
+            self.decay_count += 1
+            if self.policy == 'exponential_plateau':
+                new_lr = self.initial_lr * (self.factor ** self.decay_count)
+            elif self.policy == 'step_plateau':
+                step_val = self.factor * self.initial_lr
+                new_lr = current_lr - step_val
+            else:  # 'plateau'
+                new_lr = current_lr * self.factor
+
+            new_lr = max(new_lr, self.min_lr)
+
+            if current_lr - new_lr > 1e-12:
+                self.cooldown_counter = self.cooldown
+                self.wait_count = 0
+
+                reason = (
+                    f"Performance metric '{self.monitor}' failed to improve by >={self.min_delta} "
+                    f"for {self.patience} consecutive {step_type.lower()}s. Policy: '{self.policy}'."
+                )
+
+                event_dict = {
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'model_name': model_name,
+                    'step_type': step_type,
+                    'step': step_idx,
+                    'monitor_metric': self.monitor,
+                    'metric_value': round(float(current_metric), 5),
+                    'best_metric_value': round(float(self.best_metric), 5),
+                    'old_lr': float(current_lr),
+                    'new_lr': float(new_lr),
+                    'policy': self.policy,
+                    'decay_count': self.decay_count,
+                    'reason': reason
+                }
+
+                self.decay_events.append(event_dict)
+
+                logger.info(
+                    f"\n🔻 [LR DECAY TRIGGERED] [{model_name}] {step_type} {step_idx}: "
+                    f"Learning rate reduced from {current_lr:.6e} to {new_lr:.6e}! "
+                    f"Reason: {reason}\n"
+                )
+
+                return new_lr, True, event_dict
+            else:
+                logger.info(
+                    f"[{model_name}] {step_type} {step_idx}: Learning rate reached floor limit (min_lr = {self.min_lr:.6e}). "
+                    f"Cannot decay further."
+                )
+
+        return current_lr, False, None
+
+
+class PerformanceLRDecayCallback(tf.keras.callbacks.Callback):
+    """
+    Keras Callback wrapping PerformanceLRDecayPolicy for deep learning models.
+    Automatically updates model optimizer learning rate at the end of each epoch.
+    """
+    def __init__(
+        self,
+        policy: PerformanceLRDecayPolicy,
+        model_name: str = "DLModel",
+        epoch_offset: int = 0
+    ):
+        super().__init__()
+        self.policy = policy
+        self.model_name = model_name
+        self.epoch_offset = epoch_offset
+
+    def _get_lr(self) -> float:
+        optimizer = self.model.optimizer
+        if hasattr(optimizer.learning_rate, 'numpy'):
+            return float(optimizer.learning_rate.numpy())
+        elif hasattr(optimizer, 'lr'):
+            return float(tf.keras.backend.get_value(optimizer.lr))
+        else:
+            return float(optimizer.learning_rate)
+
+    def _set_lr(self, new_lr: float):
+        optimizer = self.model.optimizer
+        if hasattr(optimizer.learning_rate, 'assign'):
+            optimizer.learning_rate.assign(new_lr)
+        else:
+            tf.keras.backend.set_value(optimizer.learning_rate, new_lr)
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        current_lr = self._get_lr()
+        metric_val = logs.get(self.policy.monitor)
+        if metric_val is None:
+            # Fallback to loss or val_loss if monitor metric not found in logs
+            metric_val = logs.get('val_loss', logs.get('loss', 0.0))
+
+        actual_epoch = epoch + 1 + self.epoch_offset
+        new_lr, changed, event = self.policy.step(
+            current_metric=float(metric_val),
+            current_lr=current_lr,
+            model_name=self.model_name,
+            step_idx=actual_epoch,
+            step_type="Epoch"
+        )
+
+        if changed:
+            self._set_lr(new_lr)

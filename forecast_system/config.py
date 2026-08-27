@@ -12,7 +12,14 @@ DEFAULT_CONFIG = {
     'optimization': {
         'target_mae': 1.0,
         'epochs_per_iter': 5,
-        'max_iters': 3
+        'max_iters': 3,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4,
+        'lr_cooldown': 0
     },
     'persistence': {
         'enabled': True
@@ -22,13 +29,26 @@ DEFAULT_CONFIG = {
     },
     'ridge': {
         'enabled': True,
-        'alpha': 1.0
+        'alpha': 1.0,
+        'learning_rate': 0.01,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'gbdt': {
         'enabled': True,
         'max_iter': 40,
         'learning_rate': 0.1,
-        'random_state': 42
+        'random_state': 42,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-5,
+        'lr_decay_threshold': 1e-4
     },
     'lstm': {
         'enabled': True,
@@ -36,7 +56,13 @@ DEFAULT_CONFIG = {
         'learning_rate': 0.001,
         'batch_size': 64,
         'patience': 10,
-        'dropout': 0.2
+        'dropout': 0.2,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'cnn': {
         'enabled': True,
@@ -45,7 +71,13 @@ DEFAULT_CONFIG = {
         'learning_rate': 0.001,
         'batch_size': 64,
         'patience': 10,
-        'dropout': 0.2
+        'dropout': 0.2,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'dense': {
         'enabled': True,
@@ -53,13 +85,25 @@ DEFAULT_CONFIG = {
         'learning_rate': 0.001,
         'batch_size': 64,
         'patience': 10,
-        'dropout': 0.2
+        'dropout': 0.2,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'linear': {
         'enabled': True,
         'learning_rate': 0.001,
         'batch_size': 64,
-        'patience': 10
+        'patience': 10,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'deep_learning': {
         'enabled': True,
@@ -67,13 +111,25 @@ DEFAULT_CONFIG = {
         'learning_rate': 0.001,
         'batch_size': 64,
         'patience': 10,
-        'dropout': 0.2
+        'dropout': 0.2,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'machine_learning': {
         'ridge_alpha': 1.0,
         'gbdt_max_iter': 40,
         'gbdt_learning_rate': 0.1,
-        'gbdt_random_state': 42
+        'gbdt_random_state': 42,
+        'lr_decay_enabled': True,
+        'lr_decay_policy': 'plateau',
+        'lr_decay_factor': 0.5,
+        'lr_decay_patience': 2,
+        'lr_min': 1e-6,
+        'lr_decay_threshold': 1e-4
     },
     'data_quality': {
         'temp_min': -30.0,

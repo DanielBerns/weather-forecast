@@ -2,79 +2,187 @@
   "epochs": [
     {
       "epoch": 1,
-      "train_loss": 0.25676,
-      "val_loss": 0.21821,
-      "train_mae": 2.508,
-      "val_mae": 2.323,
+      "train_loss": 0.25827,
+      "val_loss": 0.22187,
+      "train_mae": 2.516,
+      "val_mae": 2.344,
+      "lr": 0.001,
       "iteration": 1
     },
     {
       "epoch": 2,
-      "train_loss": 0.23735,
-      "val_loss": 0.22052,
-      "train_mae": 2.409,
-      "val_mae": 2.335,
+      "train_loss": 0.23919,
+      "val_loss": 0.21799,
+      "train_mae": 2.419,
+      "val_mae": 2.325,
+      "lr": 0.001,
       "iteration": 1
     },
     {
       "epoch": 3,
-      "train_loss": 0.23505,
-      "val_loss": 0.21838,
-      "train_mae": 2.396,
-      "val_mae": 2.315,
+      "train_loss": 0.23591,
+      "val_loss": 0.21404,
+      "train_mae": 2.401,
+      "val_mae": 2.286,
+      "lr": 0.001,
       "iteration": 2
     },
     {
       "epoch": 4,
-      "train_loss": 0.23356,
-      "val_loss": 0.21442,
-      "train_mae": 2.387,
-      "val_mae": 2.301,
+      "train_loss": 0.23436,
+      "val_loss": 0.21853,
+      "train_mae": 2.393,
+      "val_mae": 2.321,
+      "lr": 0.001,
       "iteration": 2
     },
     {
       "epoch": 5,
-      "train_loss": 0.23272,
-      "val_loss": 0.21928,
-      "train_mae": 2.383,
-      "val_mae": 2.326,
+      "train_loss": 0.23333,
+      "val_loss": 0.22153,
+      "train_mae": 2.387,
+      "val_mae": 2.34,
+      "lr": 0.0005,
       "iteration": 3
     },
     {
       "epoch": 6,
-      "train_loss": 0.23213,
-      "val_loss": 0.21828,
-      "train_mae": 2.38,
-      "val_mae": 2.32,
+      "train_loss": 0.22892,
+      "val_loss": 0.21516,
+      "train_mae": 2.362,
+      "val_mae": 2.301,
+      "lr": 0.0005,
       "iteration": 3
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.22967,
+      "val_loss": 0.21403,
+      "train_mae": 2.365,
+      "val_mae": 2.293,
+      "lr": 0.0005,
+      "iteration": 4
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.22876,
+      "val_loss": 0.2163,
+      "train_mae": 2.36,
+      "val_mae": 2.308,
+      "lr": 0.0005,
+      "iteration": 4
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.2284,
+      "val_loss": 0.21722,
+      "train_mae": 2.359,
+      "val_mae": 2.31,
+      "lr": 0.00025,
+      "iteration": 5
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.22631,
+      "val_loss": 0.21449,
+      "train_mae": 2.346,
+      "val_mae": 2.295,
+      "lr": 0.00025,
+      "iteration": 5
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.22575,
+      "val_loss": 0.21407,
+      "train_mae": 2.343,
+      "val_mae": 2.293,
+      "lr": 0.000125,
+      "iteration": 6
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.22474,
+      "val_loss": 0.21314,
+      "train_mae": 2.337,
+      "val_mae": 2.288,
+      "lr": 0.000125,
+      "iteration": 6
     }
   ],
   "iterations": [
     {
       "iteration": 1,
       "epochs_run": 2,
-      "val_mae_c": 2.335,
+      "val_mae_c": 2.325,
       "status": "Iteration 1 completed. Continuing training..."
     },
     {
       "iteration": 2,
       "epochs_run": 4,
-      "val_mae_c": 2.301,
+      "val_mae_c": 2.321,
       "status": "Iteration 2 completed. Continuing training..."
     },
     {
       "iteration": 3,
       "epochs_run": 6,
-      "val_mae_c": 2.32,
+      "val_mae_c": 2.301,
       "status": "Iteration 3 completed. Continuing training..."
+    },
+    {
+      "iteration": 4,
+      "epochs_run": 8,
+      "val_mae_c": 2.308,
+      "status": "Iteration 4 completed. Continuing training..."
+    },
+    {
+      "iteration": 5,
+      "epochs_run": 10,
+      "val_mae_c": 2.295,
+      "status": "Iteration 5 completed. Continuing training..."
+    },
+    {
+      "iteration": 6,
+      "epochs_run": 12,
+      "val_mae_c": 2.288,
+      "status": "Iteration 6 completed. Continuing training..."
     }
   ],
-  "total_epochs": 6,
-  "best_epoch": 4,
-  "best_val_mae": 2.301,
+  "total_epochs": 12,
+  "best_epoch": 0,
+  "best_val_mae": 2.286,
   "target_mae": 1.0,
-  "final_status": "Underfitting / Limit Reached (Best Val MAE 2.30\u00b0C > target 1.0\u00b0C after 6 epochs)",
+  "final_status": "Underfitting / Limit Reached (Best Val MAE 2.29\u00b0C > target 1.0\u00b0C after 12 epochs)",
   "is_adequate": false,
   "overfitting_detected": false,
-  "underfitting_detected": true
+  "underfitting_detected": true,
+  "lr_decay_events": [
+    {
+      "timestamp": "2026-08-27 12:08:40",
+      "model_name": "LSTMModel",
+      "step_type": "Epoch",
+      "step": 9,
+      "monitor_metric": "val_loss",
+      "metric_value": 0.21722,
+      "best_metric_value": 0.21403,
+      "old_lr": 0.0005000000237487257,
+      "new_lr": 0.0002500000118743628,
+      "policy": "plateau",
+      "decay_count": 1,
+      "reason": "Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'."
+    },
+    {
+      "timestamp": "2026-08-27 12:08:58",
+      "model_name": "LSTMModel",
+      "step_type": "Epoch",
+      "step": 11,
+      "monitor_metric": "val_loss",
+      "metric_value": 0.21407,
+      "best_metric_value": 0.21403,
+      "old_lr": 0.0002500000118743628,
+      "new_lr": 0.0001250000059371814,
+      "policy": "plateau",
+      "decay_count": 2,
+      "reason": "Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'."
+    }
+  ]
 }

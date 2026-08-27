@@ -2,12 +2,26 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTabListeners();
     loadDashboardData();
     setupFormListeners();
+    setupModelFilterListeners();
 });
 
 let metricsData = null;
 let testSeriesData = null;
 let dataPropertiesData = null;
-let trainingHistoryData = null;
+let allHistoriesData = {};
+let activeModelsSet = new Set();
+let selectedTargetMetric = 'tmax';
+
+const MODEL_COLORS = {
+    "Deep Learning (LSTM)": "#38bdf8",
+    "Convolutional Neural Network (CNN)": "#a855f7",
+    "Dense Neural Network": "#f43f5e",
+    "Linear Neural Network": "#fbbf24",
+    "Gradient Boosted Trees": "#34d399",
+    "Ridge Regression": "#c084fc",
+    "Persistence Baseline": "#94a3b8",
+    "Climatology Baseline": "#64748b"
+};
 
 function setupTabListeners() {
     const tabButtons = document.querySelectorAll('.nav-tab');
@@ -15,18 +29,15 @@ function setupTabListeners() {
         button.addEventListener('click', () => {
             const targetTabId = button.getAttribute('data-tab');
 
-            // Deactivate all tab buttons and panes
             tabButtons.forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
 
-            // Activate target tab button and pane
             button.classList.add('active');
             const targetPane = document.getElementById(targetTabId);
             if (targetPane) {
                 targetPane.classList.add('active');
             }
 
-            // Trigger Plotly chart resize for visible tab
             setTimeout(resizePlotlyCharts, 50);
         });
     });
@@ -57,11 +68,17 @@ async function fetchWithFallback(outputsPath, rootPath) {
 
 async function loadDashboardData() {
     try {
-        const [metricsRes, seriesRes, propertiesRes, historyRes] = await Promise.all([
+        const [metricsRes, seriesRes, propertiesRes, allHistoriesRes, lstmHistRes, cnnHistRes, denseHistRes, linearHistRes, gbdtHistRes, ridgeHistRes] = await Promise.all([
             fetchWithFallback('outputs/model_evaluation_metrics.json', 'model_evaluation_metrics.json'),
             fetchWithFallback('outputs/test_predictions.json', 'test_predictions.json'),
             fetchWithFallback('outputs/data_properties.json', 'data_properties.json'),
-            fetchWithFallback('outputs/training_history.json', 'training_history.json')
+            fetchWithFallback('outputs/all_training_histories.json', 'all_training_histories.json'),
+            fetchWithFallback('outputs/training_history.json', 'training_history.json'),
+            fetchWithFallback('outputs/cnn_training_history.json', 'cnn_training_history.json'),
+            fetchWithFallback('outputs/dense_training_history.json', 'dense_training_history.json'),
+            fetchWithFallback('outputs/linear_training_history.json', 'linear_training_history.json'),
+            fetchWithFallback('outputs/gbdt_training_history.json', 'gbdt_training_history.json'),
+            fetchWithFallback('outputs/ridge_training_history.json', 'ridge_training_history.json')
         ]);
 
         if (metricsRes) {
@@ -72,8 +89,14 @@ async function loadDashboardData() {
 
         if (seriesRes) {
             testSeriesData = seriesRes;
+            // Initialize active models set with all available models
+            if (testSeriesData.predictions) {
+                Object.keys(testSeriesData.predictions).forEach(m => activeModelsSet.add(m));
+            }
+            renderModelFilterPills(testSeriesData);
             renderTimeSeriesChart(testSeriesData);
             renderSample24hChart(testSeriesData);
+            renderErrorDistributionChart(testSeriesData, metricsData);
             populatePresetForm(testSeriesData);
         }
 
@@ -82,17 +105,558 @@ async function loadDashboardData() {
             renderDataProperties(dataPropertiesData);
         }
 
-        if (historyRes) {
-            trainingHistoryData = historyRes;
-            renderTrainingDiagnostics(trainingHistoryData);
+        // Consolidated History Setup
+        allHistoriesData = allHistoriesRes || {};
+
+        if (!allHistoriesData['Deep Learning (LSTM)'] && lstmHistRes) {
+            allHistoriesData['Deep Learning (LSTM)'] = lstmHistRes;
         }
+        if (!allHistoriesData['Convolutional Neural Network (CNN)'] && cnnHistRes) {
+            allHistoriesData['Convolutional Neural Network (CNN)'] = cnnHistRes;
+        }
+        if (!allHistoriesData['Dense Neural Network'] && denseHistRes) {
+            allHistoriesData['Dense Neural Network'] = denseHistRes;
+        }
+        if (!allHistoriesData['Linear Neural Network'] && linearHistRes) {
+            allHistoriesData['Linear Neural Network'] = linearHistRes;
+        }
+        if (!allHistoriesData['Gradient Boosted Trees'] && gbdtHistRes) {
+            allHistoriesData['Gradient Boosted Trees'] = gbdtHistRes;
+        }
+        if (!allHistoriesData['Ridge Regression'] && ridgeHistRes) {
+            allHistoriesData['Ridge Regression'] = ridgeHistRes;
+        }
+
+        setupHistorySelectListener();
+        renderTrainingDiagnostics(allHistoriesData, 'all');
+
     } catch (err) {
         console.error("Error loading dashboard JSON data:", err);
     }
 }
 
 /* ==========================================================================
-   1. DATA PROPERTIES & QUALITY ANALYSIS FUNCTIONS
+   1. MODEL PREDICTION FILTERS & TIME SERIES EVALUATION
+   ========================================================================== */
+
+function setupModelFilterListeners() {
+    const targetSelect = document.getElementById('targetMetricSelect');
+    if (targetSelect) {
+        targetSelect.addEventListener('change', (e) => {
+            selectedTargetMetric = e.target.value;
+            if (testSeriesData) {
+                renderTimeSeriesChart(testSeriesData);
+            }
+        });
+    }
+
+    const btnAll = document.getElementById('btnSelectAllModels');
+    if (btnAll) {
+        btnAll.addEventListener('click', () => {
+            if (testSeriesData && testSeriesData.predictions) {
+                Object.keys(testSeriesData.predictions).forEach(m => activeModelsSet.add(m));
+                updateFilterPillsUI();
+                renderTimeSeriesChart(testSeriesData);
+                renderSample24hChart(testSeriesData);
+            }
+        });
+    }
+
+    const btnTop = document.getElementById('btnSelectTopModels');
+    if (btnTop) {
+        btnTop.addEventListener('click', () => {
+            activeModelsSet.clear();
+            activeModelsSet.add("Gradient Boosted Trees");
+            activeModelsSet.add("Deep Learning (LSTM)");
+            activeModelsSet.add("Convolutional Neural Network (CNN)");
+            updateFilterPillsUI();
+            if (testSeriesData) {
+                renderTimeSeriesChart(testSeriesData);
+                renderSample24hChart(testSeriesData);
+            }
+        });
+    }
+}
+
+function renderModelFilterPills(series) {
+    const container = document.getElementById('modelFilterCheckboxes');
+    if (!container || !series.predictions) return;
+
+    let html = '';
+    for (const modelName of Object.keys(series.predictions)) {
+        const isChecked = activeModelsSet.has(modelName);
+        const color = MODEL_COLORS[modelName] || '#38bdf8';
+        html += `
+            <label class="model-pill ${isChecked ? 'active' : ''}" data-model="${modelName}">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} data-model="${modelName}">
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color};"></span>
+                ${modelName}
+            </label>
+        `;
+    }
+    container.innerHTML = html;
+
+    // Attach checkbox handlers
+    container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', (e) => {
+            const mName = e.target.getAttribute('data-model');
+            if (e.target.checked) {
+                activeModelsSet.add(mName);
+            } else {
+                activeModelsSet.delete(mName);
+            }
+            updateFilterPillsUI();
+            if (testSeriesData) {
+                renderTimeSeriesChart(testSeriesData);
+                renderSample24hChart(testSeriesData);
+            }
+        });
+    });
+}
+
+function updateFilterPillsUI() {
+    const pills = document.querySelectorAll('.model-pill');
+    pills.forEach(pill => {
+        const mName = pill.getAttribute('data-model');
+        const chk = pill.querySelector('input[type="checkbox"]');
+        if (activeModelsSet.has(mName)) {
+            pill.classList.add('active');
+            if (chk) chk.checked = true;
+        } else {
+            pill.classList.remove('active');
+            if (chk) chk.checked = false;
+        }
+    });
+}
+
+function renderTimeSeriesChart(series) {
+    const chartDiv = document.getElementById('plotlyTimeSeries');
+    if (!chartDiv) return;
+
+    const traces = [];
+    const metricName = selectedTargetMetric.toUpperCase();
+
+    // Actual Ground Truth Trace
+    let actualKey = `actual_next24_${selectedTargetMetric}`;
+    if (series[actualKey]) {
+        traces.push({
+            x: series.timestamps,
+            y: series[actualKey],
+            mode: 'lines',
+            name: `Actual Observed ${metricName}`,
+            line: { color: '#ffffff', width: 3 }
+        });
+    }
+
+    // Model Prediction Traces for Active Models
+    for (const [name, predObj] of Object.entries(series.predictions)) {
+        if (activeModelsSet.has(name) && predObj[selectedTargetMetric]) {
+            const color = MODEL_COLORS[name] || '#38bdf8';
+            const isBaseline = name.includes('Baseline');
+            traces.push({
+                x: series.timestamps,
+                y: predObj[selectedTargetMetric],
+                mode: 'lines',
+                name: `${name}`,
+                line: {
+                    color: color,
+                    width: isBaseline ? 1.5 : 2,
+                    dash: isBaseline ? 'dash' : 'solid'
+                }
+            });
+        }
+    }
+
+    const layout = {
+        title: { text: `Out-of-Sample Test Evaluation: Next-Day ${metricName} (2026)`, font: { color: '#f8fafc' } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: { title: 'Reference Observation Date (2026)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        yaxis: { title: `Temperature (°C)`, gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.25 },
+        margin: { l: 40, r: 20, t: 40, b: 60 }
+    };
+
+    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
+}
+
+function renderSample24hChart(series) {
+    const chartDiv = document.getElementById('plotly24hSample');
+    if (!chartDiv) return;
+
+    const hours = Array.from({ length: 24 }, (_, i) => `+${i+1}h`);
+    const actual24h = series.actual_last_24h_profile;
+
+    const traces = [{
+        x: hours,
+        y: actual24h,
+        mode: 'lines+markers',
+        name: 'Actual Observed 24h Profile',
+        line: { color: '#34d399', width: 3.5 },
+        marker: { size: 6 }
+    }];
+
+    for (const [name, predObj] of Object.entries(series.predictions)) {
+        if (activeModelsSet.has(name) && predObj.sample_24h_profile) {
+            const color = MODEL_COLORS[name] || '#38bdf8';
+            traces.push({
+                x: hours,
+                y: predObj.sample_24h_profile,
+                mode: 'lines+markers',
+                name: `${name}`,
+                line: {
+                    color: color,
+                    width: name.includes('Baseline') ? 1.5 : 2,
+                    dash: name.includes('Baseline') ? 'dash' : 'solid'
+                },
+                marker: { size: 4 }
+            });
+        }
+    }
+
+    const layout = {
+        title: { text: `24-Hour Sequence Forecast Profile vs Actual Ground Truth (${series.last_timestamp})`, font: { color: '#f8fafc' } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: { title: 'Forecast Steps Ahead (Hours)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        yaxis: { title: 'Temperature (°C)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.25 },
+        margin: { l: 40, r: 20, t: 40, b: 60 }
+    };
+
+    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
+}
+
+function renderErrorDistributionChart(series, metrics) {
+    const chartDiv = document.getElementById('plotlyErrorDist');
+    if (!chartDiv || !series.predictions) return;
+
+    const traces = [];
+    const actualTmax = series.actual_next24_tmax;
+
+    for (const [name, predObj] of Object.entries(series.predictions)) {
+        if (predObj.tmax && actualTmax && actualTmax.length === predObj.tmax.length) {
+            const errors = predObj.tmax.map((pred, i) => Math.abs(pred - actualTmax[i]));
+            const color = MODEL_COLORS[name] || '#38bdf8';
+            traces.push({
+                y: errors,
+                name: name,
+                type: 'box',
+                marker: { color: color },
+                boxpoints: 'outliers'
+            });
+        }
+    }
+
+    const layout = {
+        title: { text: 'Out-of-Sample Absolute Forecast Error Boxplot Distribution (°C) across Test Set', font: { color: '#f8fafc' } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: { title: 'Model Architecture', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        yaxis: { title: 'Absolute Error |Y_pred - Y_actual| (°C)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        legend: { font: { color: '#f8fafc' } },
+        margin: { l: 50, r: 20, t: 40, b: 80 }
+    };
+
+    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
+}
+
+/* ==========================================================================
+   2. RESTARTABLE TRAINING EVOLUTION & LEARNING RATE DECAY FUNCTIONS
+   ========================================================================== */
+
+function setupHistorySelectListener() {
+    const historySelect = document.getElementById('modelHistorySelect');
+    if (historySelect) {
+        historySelect.addEventListener('change', (e) => {
+            const modelKey = e.target.value;
+            renderTrainingDiagnostics(allHistoriesData, modelKey);
+        });
+    }
+}
+
+function renderTrainingDiagnostics(allHistories, selectedModelKey = 'all') {
+    const bannerDiv = document.getElementById('trainingDiagBanner');
+    if (!bannerDiv) return;
+
+    if (selectedModelKey === 'all' || !allHistories[selectedModelKey]) {
+        // Multi-Model Overview Banner
+        let totalModels = Object.keys(allHistories).length;
+        let bestOverallMae = Infinity;
+        let bestModelName = '--';
+
+        for (const [mName, h] of Object.entries(allHistories)) {
+            if (h.best_val_mae && h.best_val_mae < bestOverallMae) {
+                bestOverallMae = h.best_val_mae;
+                bestModelName = mName;
+            }
+        }
+
+        bannerDiv.innerHTML = `
+            <div class="kpi-card">
+                <div class="kpi-label">Training Evolution View</div>
+                <div class="kpi-value" style="font-size: 1.1rem; color: var(--primary-cyan);">Compare All Models (${totalModels})</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Multi-Architecture Overlay</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Target MAE Threshold</div>
+                <div class="kpi-value">&lt; 1.0°C</div>
+                <div style="font-size: 0.8rem; color: var(--emerald);">Adequate Precision Goal</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Best Validation MAE</div>
+                <div class="kpi-value">${bestOverallMae !== Infinity ? bestOverallMae.toFixed(2) : '--'}°C</div>
+                <div style="font-size: 0.8rem; color: var(--emerald);">${bestModelName}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Learning Rate Decay Policy</div>
+                <div class="kpi-value" style="font-size: 1.1rem;">Performance Plateau</div>
+                <div style="font-size: 0.8rem; color: var(--violet);">Active Dynamic LR Adaptation</div>
+            </div>
+        `;
+    } else {
+        const history = allHistories[selectedModelKey];
+        let statusColor = 'var(--emerald)';
+        if (history.overfitting_detected) {
+            statusColor = 'var(--rose)';
+        } else if (history.underfitting_detected) {
+            statusColor = 'var(--amber)';
+        }
+
+        bannerDiv.innerHTML = `
+            <div class="kpi-card">
+                <div class="kpi-label">Training Fit Status (${selectedModelKey})</div>
+                <div class="kpi-value" style="font-size: 1.1rem; color: ${statusColor};">${history.final_status || history.status || 'Completed'}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Stopping Condition Evaluated</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Target MAE Threshold</div>
+                <div class="kpi-value">&lt; ${history.target_mae ? history.target_mae.toFixed(1) : 1.0}°C</div>
+                <div style="font-size: 0.8rem; color: var(--primary-cyan);">Adequate Precision Goal</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Best Validation MAE</div>
+                <div class="kpi-value">${history.best_val_mae ? history.best_val_mae.toFixed(2) : '--'}°C</div>
+                <div style="font-size: 0.8rem; color: var(--emerald);">At Epoch ${history.best_epoch || '--'}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">LR Decay Events</div>
+                <div class="kpi-value">${history.lr_decay_events ? history.lr_decay_events.length : 0} Triggered</div>
+                <div style="font-size: 0.8rem; color: var(--violet);">${history.total_epochs || (history.epochs ? history.epochs.length : (history.stages ? history.stages.length : 0))} Steps Executed</div>
+            </div>
+        `;
+    }
+
+    renderLossEvolutionChart(allHistories, selectedModelKey);
+    renderAccuracyEvolutionChart(allHistories, selectedModelKey);
+    renderLREvolutionChart(allHistories, selectedModelKey);
+}
+
+function renderLossEvolutionChart(allHistories, selectedModelKey) {
+    const chartDiv = document.getElementById('plotlyLossChart');
+    if (!chartDiv) return;
+
+    const traces = [];
+
+    if (selectedModelKey === 'all') {
+        for (const [name, hist] of Object.entries(allHistories)) {
+            if (hist.epochs && hist.epochs.length > 0 && hist.epochs[0].val_loss !== undefined) {
+                const color = MODEL_COLORS[name] || '#38bdf8';
+                traces.push({
+                    x: hist.epochs.map(e => `Epoch ${e.epoch}`),
+                    y: hist.epochs.map(e => e.val_loss),
+                    mode: 'lines+markers',
+                    name: `${name} (Val Loss)`,
+                    line: { color: color, width: 2.5 }
+                });
+            }
+        }
+    } else {
+        const hist = allHistories[selectedModelKey];
+        if (hist && hist.epochs) {
+            const color = MODEL_COLORS[selectedModelKey] || '#38bdf8';
+            traces.push({
+                x: hist.epochs.map(e => `Epoch ${e.epoch}`),
+                y: hist.epochs.map(e => e.train_loss),
+                mode: 'lines+markers',
+                name: `Training Loss (MSE)`,
+                line: { color: '#38bdf8', width: 2.5 }
+            });
+            traces.push({
+                x: hist.epochs.map(e => `Epoch ${e.epoch}`),
+                y: hist.epochs.map(e => e.val_loss),
+                mode: 'lines+markers',
+                name: `Validation Loss (MSE)`,
+                line: { color: '#a855f7', width: 2.5 }
+            });
+        }
+    }
+
+    const layout = {
+        title: { text: selectedModelKey === 'all' ? 'Validation Loss (MSE) Evolution Comparison across Neural Models' : `Loss Evolution for ${selectedModelKey}`, font: { color: '#f8fafc' } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: { title: 'Training Epochs / Iteration Steps', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        yaxis: { title: 'Mean Squared Error (MSE)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.2 },
+        margin: { l: 50, r: 20, t: 40, b: 60 }
+    };
+
+    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
+}
+
+function renderAccuracyEvolutionChart(allHistories, selectedModelKey) {
+    const chartDiv = document.getElementById('plotlyAccuracyChart');
+    if (!chartDiv) return;
+
+    const traces = [];
+    let maxSteps = 0;
+
+    if (selectedModelKey === 'all') {
+        for (const [name, hist] of Object.entries(allHistories)) {
+            const color = MODEL_COLORS[name] || '#38bdf8';
+            if (hist.epochs && hist.epochs.length > 0) {
+                maxSteps = Math.max(maxSteps, hist.epochs.length);
+                traces.push({
+                    x: hist.epochs.map(e => `Step ${e.epoch}`),
+                    y: hist.epochs.map(e => e.val_mae),
+                    mode: 'lines+markers',
+                    name: `${name} (Val MAE)`,
+                    line: { color: color, width: 2.5 }
+                });
+            } else if (hist.stages && hist.stages.length > 0) {
+                maxSteps = Math.max(maxSteps, hist.stages.length);
+                traces.push({
+                    x: hist.stages.map(s => `Step ${s.stage}`),
+                    y: hist.stages.map(s => s.val_mae),
+                    mode: 'lines+markers',
+                    name: `${name} (Val MAE)`,
+                    line: { color: color, width: 2.5, dash: 'dash' }
+                });
+            }
+        }
+    } else {
+        const hist = allHistories[selectedModelKey];
+        if (hist) {
+            if (hist.epochs) {
+                maxSteps = hist.epochs.length;
+                traces.push({
+                    x: hist.epochs.map(e => `Step ${e.epoch}`),
+                    y: hist.epochs.map(e => e.train_mae),
+                    mode: 'lines+markers',
+                    name: 'Training MAE (°C)',
+                    line: { color: '#34d399', width: 2.5 }
+                });
+                traces.push({
+                    x: hist.epochs.map(e => `Step ${e.epoch}`),
+                    y: hist.epochs.map(e => e.val_mae),
+                    mode: 'lines+markers',
+                    name: 'Validation MAE (°C)',
+                    line: { color: '#fbbf24', width: 2.5 }
+                });
+            } else if (hist.stages) {
+                maxSteps = hist.stages.length;
+                traces.push({
+                    x: hist.stages.map(s => `Step ${s.stage}`),
+                    y: hist.stages.map(s => s.val_mae),
+                    mode: 'lines+markers',
+                    name: 'Validation MAE (°C)',
+                    line: { color: '#fbbf24', width: 2.5 }
+                });
+            }
+        }
+    }
+
+    if (maxSteps > 0) {
+        const targetLine = Array(maxSteps).fill(1.0);
+        traces.push({
+            x: Array.from({ length: maxSteps }, (_, i) => `Step ${i+1}`),
+            y: targetLine,
+            mode: 'lines',
+            name: 'Target MAE Threshold (1.0°C)',
+            line: { color: '#f43f5e', width: 2, dash: 'dash' }
+        });
+    }
+
+    const layout = {
+        title: { text: selectedModelKey === 'all' ? 'Accuracy Evolution (MAE °C) Comparison across All Models' : `Accuracy Evolution (MAE °C) for ${selectedModelKey}`, font: { color: '#f8fafc' } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: { title: 'Training Steps (Epochs / Stages)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        yaxis: { title: 'Mean Absolute Error (°C)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.2 },
+        margin: { l: 50, r: 20, t: 40, b: 60 }
+    };
+
+    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
+}
+
+function renderLREvolutionChart(allHistories, selectedModelKey) {
+    const chartDiv = document.getElementById('plotlyLREvolutionChart');
+    if (!chartDiv) return;
+
+    const traces = [];
+
+    if (selectedModelKey === 'all') {
+        for (const [name, hist] of Object.entries(allHistories)) {
+            const color = MODEL_COLORS[name] || '#38bdf8';
+            if (hist.epochs && hist.epochs.length > 0 && hist.epochs[0].lr !== undefined) {
+                traces.push({
+                    x: hist.epochs.map(e => `Step ${e.epoch}`),
+                    y: hist.epochs.map(e => e.lr),
+                    mode: 'lines+markers',
+                    name: `${name} LR`,
+                    line: { color: color, width: 2.5 }
+                });
+            } else if (hist.stages && hist.stages.length > 0 && hist.stages[0].learning_rate !== undefined) {
+                traces.push({
+                    x: hist.stages.map(s => `Step ${s.stage}`),
+                    y: hist.stages.map(s => s.learning_rate),
+                    mode: 'lines+markers',
+                    name: `${name} LR`,
+                    line: { color: color, width: 2.5, dash: 'dash' }
+                });
+            }
+        }
+    } else {
+        const hist = allHistories[selectedModelKey];
+        if (hist) {
+            const color = MODEL_COLORS[selectedModelKey] || '#38bdf8';
+            if (hist.epochs && hist.epochs.length > 0 && hist.epochs[0].lr !== undefined) {
+                traces.push({
+                    x: hist.epochs.map(e => `Step ${e.epoch}`),
+                    y: hist.epochs.map(e => e.lr),
+                    mode: 'lines+markers',
+                    name: `${selectedModelKey} Learning Rate`,
+                    line: { color: color, width: 3 }
+                });
+            } else if (hist.stages && hist.stages.length > 0 && hist.stages[0].learning_rate !== undefined) {
+                traces.push({
+                    x: hist.stages.map(s => `Step ${s.stage}`),
+                    y: hist.stages.map(s => s.learning_rate),
+                    mode: 'lines+markers',
+                    name: `${selectedModelKey} Learning Rate`,
+                    line: { color: color, width: 3 }
+                });
+            }
+        }
+    }
+
+    const layout = {
+        title: { text: selectedModelKey === 'all' ? 'Performance-Based Learning Rate Decay Evolution across All Models' : `Learning Rate Decay Evolution for ${selectedModelKey}`, font: { color: '#f8fafc' } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: { title: 'Training Steps (Epochs / Stages)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        yaxis: { title: 'Active Learning Rate (Log Scale)', type: 'log', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
+        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.2 },
+        margin: { l: 60, r: 20, t: 40, b: 60 }
+    };
+
+    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
+}
+
+/* ==========================================================================
+   3. DATA PROPERTIES & QUALITY ANALYSIS FUNCTIONS
    ========================================================================== */
 
 function renderDataProperties(props) {
@@ -125,14 +689,12 @@ function renderDataProperties(props) {
         let totalBadTemp = 0;
         let totalBadDew = 0;
         let totalDewAboveTemp = 0;
-        let totalNaNRows = 0;
 
         for (const data of Object.values(props)) {
             const bv = data.bad_values;
             totalBadTemp += bv.bad_temp_count;
             totalBadDew += bv.bad_dew_count;
             totalDewAboveTemp += bv.dew_above_temp_count;
-            totalNaNRows += bv.nan_rows;
         }
 
         badValuesContainer.innerHTML = `
@@ -190,7 +752,6 @@ function renderDataHistograms(props) {
         'Test (2026)': '#34d399'
     };
 
-    // 1. Temperature Histograms
     const tempTraces = [];
     for (const [splitName, data] of Object.entries(props)) {
         const hist = data.histograms.temp;
@@ -217,7 +778,6 @@ function renderDataHistograms(props) {
 
     Plotly.newPlot(tempDiv, tempTraces, tempLayout, { responsive: true });
 
-    // 2. Dew Point Histograms
     const dewTraces = [];
     for (const [splitName, data] of Object.entries(props)) {
         const hist = data.histograms.dew;
@@ -246,133 +806,7 @@ function renderDataHistograms(props) {
 }
 
 /* ==========================================================================
-   2. RESTARTABLE TRAINING DIAGNOSTICS & EVOLUTION FUNCTIONS
-   ========================================================================== */
-
-function renderTrainingDiagnostics(history) {
-    const bannerDiv = document.getElementById('trainingDiagBanner');
-    if (!bannerDiv) return;
-
-    let statusColor = 'var(--emerald)';
-    if (history.overfitting_detected) {
-        statusColor = 'var(--rose)';
-    } else if (history.underfitting_detected) {
-        statusColor = 'var(--amber)';
-    }
-
-    bannerDiv.innerHTML = `
-        <div class="kpi-card">
-            <div class="kpi-label">Training Fit Status</div>
-            <div class="kpi-value" style="font-size: 1.1rem; color: ${statusColor};">${history.final_status}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Stopping Condition Evaluated</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Target MAE Threshold</div>
-            <div class="kpi-value">&lt; ${history.target_mae ? history.target_mae.toFixed(1) : 1.0}°C</div>
-            <div style="font-size: 0.8rem; color: var(--primary-cyan);">Adequate Precision Goal</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Best Validation MAE</div>
-            <div class="kpi-value">${history.best_val_mae ? history.best_val_mae.toFixed(2) : '--'}°C</div>
-            <div style="font-size: 0.8rem; color: var(--emerald);">At Epoch ${history.best_epoch || '--'}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Resumable Training Execution</div>
-            <div class="kpi-value">${history.iterations ? history.iterations.length : 1} Iterations</div>
-            <div style="font-size: 0.8rem; color: var(--violet);">${history.total_epochs || 0} Total Epochs Executed</div>
-        </div>
-    `;
-
-    renderLossEvolutionChart(history);
-    renderAccuracyEvolutionChart(history);
-}
-
-function renderLossEvolutionChart(history) {
-    const chartDiv = document.getElementById('plotlyLossChart');
-    if (!chartDiv || !history.epochs) return;
-
-    const epochs = history.epochs.map(e => `Epoch ${e.epoch}`);
-    const trainLoss = history.epochs.map(e => e.train_loss);
-    const valLoss = history.epochs.map(e => e.val_loss);
-
-    const traces = [
-        {
-            x: epochs,
-            y: trainLoss,
-            mode: 'lines+markers',
-            name: 'Training Loss (MSE)',
-            line: { color: '#38bdf8', width: 2.5 }
-        },
-        {
-            x: epochs,
-            y: valLoss,
-            mode: 'lines+markers',
-            name: 'Validation Loss (MSE)',
-            line: { color: '#a855f7', width: 2.5 }
-        }
-    ];
-
-    const layout = {
-        title: { text: 'Evolution of Loss across Resumable Training Epochs', font: { color: '#f8fafc' } },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        xaxis: { title: 'Training Epochs (Chunked Iterations)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        yaxis: { title: 'Mean Squared Error (MSE)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.2 },
-        margin: { l: 50, r: 20, t: 40, b: 60 }
-    };
-
-    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
-}
-
-function renderAccuracyEvolutionChart(history) {
-    const chartDiv = document.getElementById('plotlyAccuracyChart');
-    if (!chartDiv || !history.epochs) return;
-
-    const epochs = history.epochs.map(e => `Epoch ${e.epoch}`);
-    const trainMae = history.epochs.map(e => e.train_mae);
-    const valMae = history.epochs.map(e => e.val_mae);
-    const targetLine = Array(epochs.length).fill(history.target_mae || 1.0);
-
-    const traces = [
-        {
-            x: epochs,
-            y: trainMae,
-            mode: 'lines+markers',
-            name: 'Training MAE (°C)',
-            line: { color: '#34d399', width: 2.5 }
-        },
-        {
-            x: epochs,
-            y: valMae,
-            mode: 'lines+markers',
-            name: 'Validation MAE (°C)',
-            line: { color: '#fbbf24', width: 2.5 }
-        },
-        {
-            x: epochs,
-            y: targetLine,
-            mode: 'lines',
-            name: `Target MAE (${history.target_mae || 1.0}°C)`,
-            line: { color: '#f43f5e', width: 2, dash: 'dash' }
-        }
-    ];
-
-    const layout = {
-        title: { text: 'Accuracy Evolution (MAE °C) & Convergence to Target Precision', font: { color: '#f8fafc' } },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        xaxis: { title: 'Training Epochs (Chunked Iterations)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        yaxis: { title: 'Mean Absolute Error (°C)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.2 },
-        margin: { l: 50, r: 20, t: 40, b: 60 }
-    };
-
-    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
-}
-
-/* ==========================================================================
-   3. OUT-OF-SAMPLE EVALUATION & LEADERBOARD FUNCTIONS
+   4. OUT-OF-SAMPLE EVALUATION & LEADERBOARD FUNCTIONS
    ========================================================================== */
 
 function renderKPISummary(metrics) {
@@ -450,103 +884,6 @@ function renderLeaderboardTable(metrics) {
     });
 
     tableBody.innerHTML = rowsHtml;
-}
-
-function renderTimeSeriesChart(series) {
-    const chartDiv = document.getElementById('plotlyTimeSeries');
-    if (!chartDiv) return;
-
-    const traces = [];
-
-    // Actual TMAX
-    traces.push({
-        x: series.timestamps,
-        y: series.actual_next24_tmax,
-        mode: 'lines',
-        name: 'Actual Next-24h TMAX',
-        line: { color: '#f43f5e', width: 2 }
-    });
-
-    // Actual TMIN
-    traces.push({
-        x: series.timestamps,
-        y: series.actual_next24_tmin,
-        mode: 'lines',
-        name: 'Actual Next-24h TMIN',
-        line: { color: '#34d399', width: 2 }
-    });
-
-    // Best Model Predictions
-    if (series.predictions['Gradient Boosted Trees']) {
-        const gb = series.predictions['Gradient Boosted Trees'];
-        traces.push({
-            x: series.timestamps,
-            y: gb.tmax,
-            mode: 'lines',
-            name: 'GBDT Predicted TMAX',
-            line: { color: '#fbbf24', width: 2, dash: 'dot' }
-        });
-
-        traces.push({
-            x: series.timestamps,
-            y: gb.tmin,
-            mode: 'lines',
-            name: 'GBDT Predicted TMIN',
-            line: { color: '#38bdf8', width: 2, dash: 'dot' }
-        });
-    }
-
-    const layout = {
-        title: { text: 'Out-of-Sample Test Evaluation: Next-Day TMAX and TMIN (2026)', font: { color: '#f8fafc' } },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        xaxis: { title: 'Reference Date (2026)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        yaxis: { title: 'Temperature (°C)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.2 },
-        margin: { l: 40, r: 20, t: 40, b: 60 }
-    };
-
-    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
-}
-
-function renderSample24hChart(series) {
-    const chartDiv = document.getElementById('plotly24hSample');
-    if (!chartDiv) return;
-
-    const hours = Array.from({ length: 24 }, (_, i) => `+${i+1}h`);
-    const actual24h = series.actual_last_24h_profile;
-
-    const traces = [{
-        x: hours,
-        y: actual24h,
-        mode: 'lines+markers',
-        name: 'Actual Observed 24h Profile',
-        line: { color: '#34d399', width: 3 }
-    }];
-
-    for (const [name, predObj] of Object.entries(series.predictions)) {
-        if (predObj.sample_24h_profile) {
-            traces.push({
-                x: hours,
-                y: predObj.sample_24h_profile,
-                mode: 'lines+markers',
-                name: `${name} Forecast`,
-                line: { width: 2, dash: name.includes('Baseline') ? 'dash' : 'solid' }
-            });
-        }
-    }
-
-    const layout = {
-        title: { text: `24-Hour Forecast Sequence vs Actual (${series.last_timestamp})`, font: { color: '#f8fafc' } },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        xaxis: { title: 'Forecast Steps (Hours Ahead)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        yaxis: { title: 'Temperature (°C)', gridcolor: 'rgba(255,255,255,0.05)', color: '#94a3b8' },
-        legend: { font: { color: '#f8fafc' }, orientation: 'h', y: -0.25 },
-        margin: { l: 40, r: 20, t: 40, b: 60 }
-    };
-
-    Plotly.newPlot(chartDiv, traces, layout, { responsive: true });
 }
 
 function populatePresetForm(series) {
