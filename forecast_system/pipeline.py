@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+import logging
+from datetime import datetime
 from forecast_system.config import load_config
 from forecast_system.data.loader import load_combined_dataset, get_train_val_test_splits
 from forecast_system.data.feature_engineering import create_features_and_targets
@@ -19,7 +21,31 @@ from forecast_system.models.deep_learning import (
 )
 from forecast_system.evaluation.evaluator import ForecastEvaluator
 
+def setup_file_logging(logs_dir="logs"):
+    logs_dir = Path(logs_dir)
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    log_file = logs_dir / "forecast_pipeline.log"
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+
+    if not any(isinstance(h, logging.FileHandler) and Path(getattr(h, 'baseFilename', '')).name == "forecast_pipeline.log" for h in root_logger.handlers):
+        fh = logging.FileHandler(log_file, mode='a', encoding='utf-8')
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(file_formatter)
+        root_logger.addHandler(fh)
+
+    logging.info("========================================================")
+    logging.info(f"PIPELINE EXECUTION LOG STARTED AT {datetime.now().isoformat()}")
+    logging.info("========================================================")
+    return log_file
+
 def run_pipeline(config_path=None):
+    log_file = setup_file_logging()
+    print(f"Logging extensive pipeline diagnostics to '{log_file}'")
+
     # 1. Load YAML Configuration
     cfg = load_config(config_path)
 
@@ -41,6 +67,7 @@ def run_pipeline(config_path=None):
 
     is_reset = (mode.lower() == "reset")
 
+    logging.info(f"Pipeline execution mode: {mode.upper()} | Output Dir: {outputs_dir}")
     print("========================================================")
     print("STEP 1: LOADING & PREPROCESSING WEATHER DATASETS")
     print("========================================================")
