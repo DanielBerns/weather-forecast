@@ -34,225 +34,225 @@
   "Climatology Baseline": {
     "model_name": "Climatology Baseline",
     "hourly_24h": {
-      "mae": 3.4557,
-      "rmse": 4.2526,
-      "mape": 56.33,
-      "r2": 0.673,
-      "acc_1.0C": 17.17,
-      "acc_2.0C": 33.59,
-      "directional_precision": 62.51,
-      "directional_recall": 70.02,
-      "directional_f1": 66.05
+      "mae": 3.4545,
+      "rmse": 4.2517,
+      "mape": 56.32,
+      "r2": 0.6732,
+      "acc_1.0C": 17.13,
+      "acc_2.0C": 33.68,
+      "directional_precision": 62.44,
+      "directional_recall": 70.13,
+      "directional_f1": 66.06
     },
     "tmax": {
-      "mae": 3.783,
-      "rmse": 4.6087,
-      "mape": 28.38,
-      "r2": 0.6426
+      "mae": 3.7855,
+      "rmse": 4.614,
+      "mape": 28.28,
+      "r2": 0.6418
     },
     "tmin": {
-      "mae": 3.6011,
-      "rmse": 4.3796,
-      "mape": 104.86,
-      "r2": 0.4969
+      "mae": 3.6459,
+      "rmse": 4.4266,
+      "mape": 106.03,
+      "r2": 0.4861
     },
     "tavg": {
-      "mae": 2.9743,
-      "rmse": 3.6256,
-      "mape": 48.59,
-      "r2": 0.7072
+      "mae": 2.9735,
+      "rmse": 3.622,
+      "mape": 48.5,
+      "r2": 0.7078
     }
   },
   "Ridge Regression": {
     "model_name": "Ridge Regression",
     "hourly_24h": {
-      "mae": 3.2972,
-      "rmse": 4.1609,
-      "mape": 54.36,
-      "r2": 0.687,
-      "acc_1.0C": 19.95,
-      "acc_2.0C": 38.01,
-      "directional_precision": 58.61,
-      "directional_recall": 74.73,
-      "directional_f1": 65.7
+      "mae": 3.4435,
+      "rmse": 4.3487,
+      "mape": 44.41,
+      "r2": 0.6581,
+      "acc_1.0C": 18.41,
+      "acc_2.0C": 35.89,
+      "directional_precision": 63.07,
+      "directional_recall": 62.9,
+      "directional_f1": 62.98
     },
     "tmax": {
-      "mae": 2.9191,
-      "rmse": 3.659,
-      "mape": 21.74,
-      "r2": 0.7747
+      "mae": 3.1595,
+      "rmse": 3.9845,
+      "mape": 21.28,
+      "r2": 0.7329
     },
     "tmin": {
-      "mae": 2.7333,
-      "rmse": 3.37,
-      "mape": 68.96,
-      "r2": 0.7021
+      "mae": 2.6438,
+      "rmse": 3.2564,
+      "mape": 57.13,
+      "r2": 0.7219
     },
     "tavg": {
-      "mae": 2.5739,
-      "rmse": 3.143,
-      "mape": 40.56,
-      "r2": 0.78
+      "mae": 2.5834,
+      "rmse": 3.2522,
+      "mape": 29.29,
+      "r2": 0.7644
     }
   },
   "Gradient Boosted Trees": {
     "model_name": "Gradient Boosted Trees",
     "hourly_24h": {
-      "mae": 3.6762,
-      "rmse": 4.6389,
+      "mae": 3.6761,
+      "rmse": 4.6388,
       "mape": 67.11,
       "r2": 0.611,
-      "acc_1.0C": 18.01,
+      "acc_1.0C": 18.0,
       "acc_2.0C": 34.81,
       "directional_precision": 56.9,
       "directional_recall": 68.32,
       "directional_f1": 62.09
     },
     "tmax": {
-      "mae": 2.524,
-      "rmse": 3.1601,
+      "mae": 2.5239,
+      "rmse": 3.16,
       "mape": 19.05,
       "r2": 0.832
     },
     "tmin": {
       "mae": 2.1814,
-      "rmse": 2.7367,
-      "mape": 52.07,
-      "r2": 0.8036
+      "rmse": 2.7368,
+      "mape": 52.08,
+      "r2": 0.8035
     },
     "tavg": {
-      "mae": 2.0275,
-      "rmse": 2.5166,
+      "mae": 2.0274,
+      "rmse": 2.5165,
       "mape": 27.15,
-      "r2": 0.8589
+      "r2": 0.859
     }
   },
   "Deep Learning (LSTM)": {
     "model_name": "Deep Learning (LSTM)",
     "hourly_24h": {
-      "mae": 2.4794,
-      "rmse": 3.2279,
-      "mape": 37.47,
-      "r2": 0.8116,
-      "acc_1.0C": 28.27,
-      "acc_2.0C": 50.99,
-      "directional_precision": 60.74,
-      "directional_recall": 74.88,
-      "directional_f1": 67.07
+      "mae": 2.4878,
+      "rmse": 3.2383,
+      "mape": 37.82,
+      "r2": 0.8104,
+      "acc_1.0C": 28.29,
+      "acc_2.0C": 50.96,
+      "directional_precision": 60.8,
+      "directional_recall": 75.14,
+      "directional_f1": 67.22
     },
     "tmax": {
-      "mae": 2.639,
-      "rmse": 3.4664,
-      "mape": 17.19,
-      "r2": 0.7978
+      "mae": 2.604,
+      "rmse": 3.4307,
+      "mape": 17.14,
+      "r2": 0.8019
     },
     "tmin": {
-      "mae": 2.8699,
-      "rmse": 3.5646,
-      "mape": 78.45,
-      "r2": 0.6667
+      "mae": 2.8977,
+      "rmse": 3.5922,
+      "mape": 78.93,
+      "r2": 0.6616
     },
     "tavg": {
-      "mae": 1.972,
-      "rmse": 2.4648,
-      "mape": 26.69,
-      "r2": 0.8647
+      "mae": 1.9826,
+      "rmse": 2.4765,
+      "mape": 27.17,
+      "r2": 0.8634
     }
   },
   "Convolutional Neural Network (CNN)": {
     "model_name": "Convolutional Neural Network (CNN)",
     "hourly_24h": {
-      "mae": 2.523,
-      "rmse": 3.2879,
-      "mape": 37.13,
-      "r2": 0.8046,
-      "acc_1.0C": 27.69,
-      "acc_2.0C": 50.41,
-      "directional_precision": 61.26,
-      "directional_recall": 72.02,
-      "directional_f1": 66.2
+      "mae": 2.5173,
+      "rmse": 3.2883,
+      "mape": 37.18,
+      "r2": 0.8045,
+      "acc_1.0C": 27.71,
+      "acc_2.0C": 50.54,
+      "directional_precision": 61.47,
+      "directional_recall": 73.67,
+      "directional_f1": 67.02
     },
     "tmax": {
-      "mae": 2.6638,
-      "rmse": 3.4939,
-      "mape": 17.28,
-      "r2": 0.7946
+      "mae": 2.6899,
+      "rmse": 3.5475,
+      "mape": 17.16,
+      "r2": 0.7882
     },
     "tmin": {
-      "mae": 2.8333,
-      "rmse": 3.522,
-      "mape": 76.06,
-      "r2": 0.6746
+      "mae": 2.8478,
+      "rmse": 3.546,
+      "mape": 76.56,
+      "r2": 0.6702
     },
     "tavg": {
-      "mae": 2.0313,
-      "rmse": 2.5294,
-      "mape": 25.96,
-      "r2": 0.8575
+      "mae": 2.0141,
+      "rmse": 2.5187,
+      "mape": 25.84,
+      "r2": 0.8587
     }
   },
   "Dense Neural Network": {
     "model_name": "Dense Neural Network",
     "hourly_24h": {
-      "mae": 2.4875,
-      "rmse": 3.2268,
-      "mape": 36.83,
-      "r2": 0.8118,
-      "acc_1.0C": 28.01,
-      "acc_2.0C": 50.64,
-      "directional_precision": 61.75,
-      "directional_recall": 74.5,
-      "directional_f1": 67.53
+      "mae": 2.4551,
+      "rmse": 3.1997,
+      "mape": 36.01,
+      "r2": 0.8149,
+      "acc_1.0C": 28.73,
+      "acc_2.0C": 51.37,
+      "directional_precision": 61.6,
+      "directional_recall": 75.1,
+      "directional_f1": 67.68
     },
     "tmax": {
-      "mae": 2.6395,
-      "rmse": 3.4429,
-      "mape": 17.02,
-      "r2": 0.8005
+      "mae": 2.6161,
+      "rmse": 3.4336,
+      "mape": 16.9,
+      "r2": 0.8016
     },
     "tmin": {
-      "mae": 2.8543,
-      "rmse": 3.5417,
-      "mape": 76.35,
-      "r2": 0.671
+      "mae": 2.7928,
+      "rmse": 3.4882,
+      "mape": 74.59,
+      "r2": 0.6809
     },
     "tavg": {
-      "mae": 1.9717,
-      "rmse": 2.4625,
-      "mape": 25.83,
-      "r2": 0.8649
+      "mae": 1.9371,
+      "rmse": 2.4326,
+      "mape": 25.04,
+      "r2": 0.8682
     }
   },
   "Linear Neural Network": {
     "model_name": "Linear Neural Network",
     "hourly_24h": {
-      "mae": 2.5449,
-      "rmse": 3.2827,
-      "mape": 36.53,
-      "r2": 0.8052,
-      "acc_1.0C": 27.35,
-      "acc_2.0C": 49.35,
-      "directional_precision": 63.74,
-      "directional_recall": 73.82,
-      "directional_f1": 68.41
+      "mae": 2.5482,
+      "rmse": 3.2938,
+      "mape": 37.07,
+      "r2": 0.8039,
+      "acc_1.0C": 27.59,
+      "acc_2.0C": 49.39,
+      "directional_precision": 63.57,
+      "directional_recall": 73.75,
+      "directional_f1": 68.28
     },
     "tmax": {
-      "mae": 2.616,
-      "rmse": 3.4213,
-      "mape": 18.28,
-      "r2": 0.803
+      "mae": 2.6517,
+      "rmse": 3.4851,
+      "mape": 18.41,
+      "r2": 0.7956
     },
     "tmin": {
-      "mae": 2.5187,
-      "rmse": 3.1783,
-      "mape": 61.24,
-      "r2": 0.7351
+      "mae": 2.5302,
+      "rmse": 3.1935,
+      "mape": 62.97,
+      "r2": 0.7325
     },
     "tavg": {
-      "mae": 1.976,
-      "rmse": 2.4755,
-      "mape": 26.21,
-      "r2": 0.8635
+      "mae": 1.9844,
+      "rmse": 2.4893,
+      "mape": 26.93,
+      "r2": 0.862
     }
   }
 }

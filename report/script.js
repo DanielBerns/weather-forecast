@@ -24,7 +24,7 @@ const MODEL_COLORS = {
 };
 
 function setupTabListeners() {
-    const tabButtons = document.querySelectorAll('.nav-tab');
+    const tabButtons = document.querySelectorAll('.nav-tab[data-tab]');
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetTabId = button.getAttribute('data-tab');

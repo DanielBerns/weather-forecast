@@ -1,0 +1,126 @@
+2026-08-28 09:53:41,137 [INFO] root: ========================================================
+2026-08-28 09:53:41,137 [INFO] root: PIPELINE EXECUTION LOG STARTED AT 2026-08-28T09:53:41.137621
+2026-08-28 09:53:41,137 [INFO] root: ========================================================
+2026-08-28 09:53:41,145 [INFO] root: Pipeline execution mode: RESUME | Output Dir: report/outputs
+2026-08-28 09:53:41,145 [INFO] forecast_system.data.loader: ✓ Found pre-cleaned dataset file: cleaned_combined_CR.csv. Loading cleaned dataset directly...
+2026-08-28 09:53:42,589 [INFO] forecast_system.data.cleaner: Executing comprehensive weather data cleaning recommendations...
+2026-08-28 09:53:42,760 [INFO] forecast_system.data.loader: ✓ Pre-cleaned dataset loaded successfully.
+  - File: cleaned_combined_CR.csv
+  - Total Hourly Records: 606,160
+  - Date Range: 1957-06-30 00:00:00 to 2026-08-23 15:00:00
+  - Temperature Range: [-7.00°C, 42.00°C]
+  - Dew Point Range: [-30.00°C, 22.00°C]
+  - Dew > Temp Violation Count: 0
+2026-08-28 09:53:46,638 [INFO] forecast_system.models.ml_models: 
+--- Training Ridge Linear Model (Alpha: 1.0, Initial LR: 0.01) ---
+2026-08-28 09:56:25,972 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 2: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 09:57:44,094 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 3: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 09:57:44,094 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 3: Learning rate reduced from 1.000000e-02 to 5.000000e-03! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 09:59:01,721 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 4: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 10:00:19,741 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 5: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 10:00:19,741 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 5: Learning rate reduced from 5.000000e-03 to 2.500000e-03! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:01:37,497 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 6: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 10:02:55,178 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 7: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 10:02:55,178 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 7: Learning rate reduced from 2.500000e-03 to 1.250000e-03! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:04:12,791 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 8: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 10:05:30,266 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 9: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 10:05:30,266 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 9: Learning rate reduced from 1.250000e-03 to 6.250000e-04! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:06:47,310 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 10: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 10:08:04,927 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 11: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 10:08:04,927 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 11: Learning rate reduced from 6.250000e-04 to 3.125000e-04! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:09:22,612 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 12: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 10:10:40,654 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 13: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 10:10:40,654 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 13: Learning rate reduced from 3.125000e-04 to 1.562500e-04! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:11:58,807 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 14: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 1/2.
+2026-08-28 10:13:17,103 [INFO] forecast_system.lr_policy: [RidgeRegression] Epoch 15: Performance metric 'val_mae' stagnated at 3.33877 (Best: 3.33877). Wait count: 2/2.
+2026-08-28 10:13:17,103 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [RidgeRegression] Epoch 15: Learning rate reduced from 1.562500e-04 to 7.812500e-05! Reason: Performance metric 'val_mae' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:13:17,103 [INFO] forecast_system.models.ml_models: ✓ Ridge Regression training completed. Final LR: 7.812500e-05
+2026-08-28 10:13:19,696 [INFO] forecast_system.models.deep_learning: 🔁 [RESUME MODE] Checking for existing saved weights and training history for LSTM model...
+2026-08-28 10:13:20,794 [INFO] forecast_system.models.deep_learning: ✓ Loaded saved LSTM model from report/outputs/lstm_checkpoint.keras
+2026-08-28 10:13:20,805 [INFO] forecast_system.models.deep_learning: ✓ Resuming from past training history (12 epochs executed, past best MAE: 2.286°C)
+2026-08-28 10:13:20,805 [INFO] forecast_system.models.deep_learning: --- Running LSTM Training (Target MAE < 1.0°C | Epochs/iter: 2 | Iterations: 7 to 9 | LR Decay Policy: 'plateau') ---
+2026-08-28 10:13:41,849 [INFO] forecast_system.lr_policy: [LSTMModel] Epoch 14: Performance metric 'val_loss' stagnated at 0.21436 (Best: 0.21296). Wait count: 1/2.
+2026-08-28 10:13:41,866 [INFO] forecast_system.models.deep_learning: Iteration 7/9 (Total Epochs: 14) -> Val MAE: 2.29°C (Best: 2.28°C) | Current LR: 1.250000e-04
+2026-08-28 10:13:51,397 [INFO] forecast_system.lr_policy: [LSTMModel] Epoch 15: Performance metric 'val_loss' stagnated at 0.21554 (Best: 0.21296). Wait count: 2/2.
+2026-08-28 10:13:51,397 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [LSTMModel] Epoch 15: Learning rate reduced from 1.250000e-04 to 6.250000e-05! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:14:00,775 [INFO] forecast_system.lr_policy: [LSTMModel] Epoch 16: Performance metric 'val_loss' stagnated at 0.21325 (Best: 0.21296). Wait count: 1/2.
+2026-08-28 10:14:00,789 [INFO] forecast_system.models.deep_learning: Iteration 8/9 (Total Epochs: 16) -> Val MAE: 2.29°C (Best: 2.28°C) | Current LR: 6.250000e-05
+2026-08-28 10:14:19,738 [INFO] forecast_system.lr_policy: [LSTMModel] Epoch 18: Performance metric 'val_loss' stagnated at 0.21364 (Best: 0.21260). Wait count: 1/2.
+2026-08-28 10:14:19,751 [INFO] forecast_system.models.deep_learning: Iteration 9/9 (Total Epochs: 18) -> Val MAE: 2.29°C (Best: 2.28°C) | Current LR: 6.250000e-05
+2026-08-28 10:14:19,751 [INFO] forecast_system.models.deep_learning: ℹ️ Underfitting / Limit Reached (Best Val MAE 2.28°C > target 1.0°C after 18 epochs)
+2026-08-28 10:14:20,379 [INFO] forecast_system.models.deep_learning: Saved updated LSTM model checkpoint to report/outputs/lstm_checkpoint.keras
+2026-08-28 10:14:20,380 [INFO] forecast_system.models.deep_learning: Saved updated LSTM training history log to report/outputs/training_history.json
+2026-08-28 10:14:21,172 [INFO] forecast_system.models.cnn_weather_forecast: 🔁 [RESUME MODE] Checking for existing saved weights and training history for CNN model...
+2026-08-28 10:14:21,967 [INFO] forecast_system.models.cnn_weather_forecast: ✓ Loaded saved CNN model from report/outputs/cnn_checkpoint.keras
+2026-08-28 10:14:21,997 [INFO] forecast_system.models.cnn_weather_forecast: ✓ Resuming from past training history (12 epochs executed, past best MAE: 2.289°C)
+2026-08-28 10:14:21,997 [INFO] forecast_system.models.cnn_weather_forecast: --- Running CNN Training (Target MAE < 1.0°C | Epochs/iter: 2 | Iterations: 7 to 9 | LR Decay Policy: 'plateau') ---
+2026-08-28 10:16:47,888 [INFO] forecast_system.lr_policy: [CNNModel] Epoch 14: Performance metric 'val_loss' stagnated at 0.21875 (Best: 0.21807). Wait count: 1/2.
+2026-08-28 10:16:47,902 [INFO] forecast_system.models.cnn_weather_forecast: Iteration 7/9 (Total Epochs: 14) -> Val MAE: 2.30°C (Best: 2.29°C) | Current LR: 1.250000e-04
+2026-08-28 10:17:59,335 [INFO] forecast_system.lr_policy: [CNNModel] Epoch 15: Performance metric 'val_loss' stagnated at 0.21866 (Best: 0.21807). Wait count: 2/2.
+2026-08-28 10:17:59,335 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [CNNModel] Epoch 15: Learning rate reduced from 1.250000e-04 to 6.250000e-05! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:19:10,783 [INFO] forecast_system.lr_policy: [CNNModel] Epoch 16: Performance metric 'val_loss' stagnated at 0.21853 (Best: 0.21807). Wait count: 1/2.
+2026-08-28 10:19:10,798 [INFO] forecast_system.models.cnn_weather_forecast: Iteration 8/9 (Total Epochs: 16) -> Val MAE: 2.30°C (Best: 2.29°C) | Current LR: 6.250000e-05
+2026-08-28 10:20:22,774 [INFO] forecast_system.lr_policy: [CNNModel] Epoch 17: Performance metric 'val_loss' stagnated at 0.21931 (Best: 0.21807). Wait count: 2/2.
+2026-08-28 10:20:22,774 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [CNNModel] Epoch 17: Learning rate reduced from 6.250000e-05 to 3.125000e-05! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:21:35,179 [INFO] forecast_system.lr_policy: [CNNModel] Epoch 18: Performance metric 'val_loss' stagnated at 0.21857 (Best: 0.21807). Wait count: 1/2.
+2026-08-28 10:21:35,195 [INFO] forecast_system.models.cnn_weather_forecast: Iteration 9/9 (Total Epochs: 18) -> Val MAE: 2.30°C (Best: 2.29°C) | Current LR: 3.125000e-05
+2026-08-28 10:21:35,195 [INFO] forecast_system.models.cnn_weather_forecast: ℹ️ Underfitting / Limit Reached (Best Val MAE 2.29°C > target 1.0°C after 18 epochs)
+2026-08-28 10:21:35,243 [INFO] forecast_system.models.cnn_weather_forecast: Saved updated CNN model checkpoint to report/outputs/cnn_checkpoint.keras
+2026-08-28 10:21:35,244 [INFO] forecast_system.models.cnn_weather_forecast: Saved updated CNN training history log to report/outputs/cnn_training_history.json
+2026-08-28 10:21:36,173 [INFO] forecast_system.models.dense_weather_forecast: 🔁 [RESUME MODE] Checking for existing saved weights and training history for Dense model...
+2026-08-28 10:21:36,409 [INFO] forecast_system.models.dense_weather_forecast: ✓ Loaded saved Dense model from report/outputs/dense_checkpoint.keras
+2026-08-28 10:21:36,435 [INFO] forecast_system.models.dense_weather_forecast: ✓ Resuming from past training history (12 epochs executed, past best MAE: 2.29°C)
+2026-08-28 10:21:36,435 [INFO] forecast_system.models.dense_weather_forecast: --- Running Dense Training (Target MAE < 1.0°C | Epochs/iter: 2 | Iterations: 7 to 9 | LR Decay Policy: 'plateau') ---
+2026-08-28 10:21:55,628 [INFO] forecast_system.lr_policy: [DenseModel] Epoch 14: Performance metric 'val_loss' stagnated at 0.21223 (Best: 0.21184). Wait count: 1/2.
+2026-08-28 10:21:55,642 [INFO] forecast_system.models.dense_weather_forecast: Iteration 7/9 (Total Epochs: 14) -> Val MAE: 2.28°C (Best: 2.28°C) | Current LR: 2.500000e-04
+2026-08-28 10:22:05,144 [INFO] forecast_system.lr_policy: [DenseModel] Epoch 15: Performance metric 'val_loss' stagnated at 0.21209 (Best: 0.21184). Wait count: 2/2.
+2026-08-28 10:22:05,144 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [DenseModel] Epoch 15: Learning rate reduced from 2.500000e-04 to 1.250000e-04! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:22:14,313 [INFO] forecast_system.lr_policy: [DenseModel] Epoch 16: Performance metric 'val_loss' stagnated at 0.21246 (Best: 0.21184). Wait count: 1/2.
+2026-08-28 10:22:14,327 [INFO] forecast_system.models.dense_weather_forecast: Iteration 8/9 (Total Epochs: 16) -> Val MAE: 2.28°C (Best: 2.28°C) | Current LR: 1.250000e-04
+2026-08-28 10:22:23,785 [INFO] forecast_system.lr_policy: [DenseModel] Epoch 17: Performance metric 'val_loss' stagnated at 0.21221 (Best: 0.21184). Wait count: 2/2.
+2026-08-28 10:22:23,785 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [DenseModel] Epoch 17: Learning rate reduced from 1.250000e-04 to 6.250000e-05! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:22:33,054 [INFO] forecast_system.lr_policy: [DenseModel] Epoch 18: Performance metric 'val_loss' stagnated at 0.21219 (Best: 0.21184). Wait count: 1/2.
+2026-08-28 10:22:33,067 [INFO] forecast_system.models.dense_weather_forecast: Iteration 9/9 (Total Epochs: 18) -> Val MAE: 2.28°C (Best: 2.28°C) | Current LR: 6.250000e-05
+2026-08-28 10:22:33,067 [INFO] forecast_system.models.dense_weather_forecast: ℹ️ Underfitting / Limit Reached (Best Val MAE 2.28°C > target 1.0°C after 18 epochs)
+2026-08-28 10:22:33,306 [INFO] forecast_system.models.dense_weather_forecast: Saved updated Dense model checkpoint to report/outputs/dense_checkpoint.keras
+2026-08-28 10:22:33,307 [INFO] forecast_system.models.dense_weather_forecast: Saved updated Dense training history log to report/outputs/dense_training_history.json
+2026-08-28 10:22:34,278 [INFO] forecast_system.models.linear_weather_forecast: 🔁 [RESUME MODE] Checking for existing saved weights and training history for Linear model...
+2026-08-28 10:22:34,400 [INFO] forecast_system.models.linear_weather_forecast: ✓ Loaded saved Linear model from report/outputs/linear_checkpoint.keras
+2026-08-28 10:22:34,400 [INFO] forecast_system.models.linear_weather_forecast: ✓ Resuming from past training history (12 epochs executed, past best MAE: 2.374°C)
+2026-08-28 10:22:34,400 [INFO] forecast_system.models.linear_weather_forecast: --- Running Linear Training (Target MAE < 1.0°C | Epochs/iter: 2 | Iterations: 7 to 9 | LR Decay Policy: 'plateau') ---
+2026-08-28 10:22:47,668 [INFO] forecast_system.models.linear_weather_forecast: Iteration 7/9 (Total Epochs: 14) -> Val MAE: 2.38°C (Best: 2.37°C) | Current LR: 2.500000e-04
+2026-08-28 10:23:00,612 [INFO] forecast_system.lr_policy: [LinearModel] Epoch 16: Performance metric 'val_loss' stagnated at 0.23063 (Best: 0.22991). Wait count: 1/2.
+2026-08-28 10:23:00,627 [INFO] forecast_system.models.linear_weather_forecast: Iteration 8/9 (Total Epochs: 16) -> Val MAE: 2.38°C (Best: 2.37°C) | Current LR: 2.500000e-04
+2026-08-28 10:23:07,277 [INFO] forecast_system.lr_policy: [LinearModel] Epoch 17: Performance metric 'val_loss' stagnated at 0.23079 (Best: 0.22991). Wait count: 2/2.
+2026-08-28 10:23:07,278 [INFO] forecast_system.lr_policy: 
+🔻 [LR DECAY TRIGGERED] [LinearModel] Epoch 17: Learning rate reduced from 2.500000e-04 to 1.250000e-04! Reason: Performance metric 'val_loss' failed to improve by >=0.0001 for 2 consecutive epochs. Policy: 'plateau'.
+
+2026-08-28 10:23:13,564 [INFO] forecast_system.lr_policy: [LinearModel] Epoch 18: Performance metric 'val_loss' stagnated at 0.23074 (Best: 0.22991). Wait count: 1/2.
+2026-08-28 10:23:13,579 [INFO] forecast_system.models.linear_weather_forecast: Iteration 9/9 (Total Epochs: 18) -> Val MAE: 2.38°C (Best: 2.37°C) | Current LR: 1.250000e-04
+2026-08-28 10:23:13,579 [INFO] forecast_system.models.linear_weather_forecast: ℹ️ Underfitting / Limit Reached (Best Val MAE 2.37°C > target 1.0°C after 18 epochs)
+2026-08-28 10:23:13,591 [INFO] forecast_system.models.linear_weather_forecast: Saved updated Linear model checkpoint to report/outputs/linear_checkpoint.keras
+2026-08-28 10:23:13,592 [INFO] forecast_system.models.linear_weather_forecast: Saved updated Linear training history log to report/outputs/linear_training_history.json

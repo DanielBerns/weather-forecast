@@ -30,6 +30,7 @@ Weather analysis, multi-step 24-hour time-series temperature forecasting, resuma
    - **Tab 1 (📊 Model Evaluation & Live Forecast Engine)**: Out-of-Sample Leaderboard, KPI cards, sequence profiles, and interactive forecast generator.
    - **Tab 2 (🔍 Data Quality & Split Analysis)**: Split breakdown cards, bad values/anomaly summary, statistics table, and Plotly comparative histograms.
    - **Tab 3 (🔄 Training Evolution & Fit Diagnostics)**: Fit status banner, MSE loss evolution curve per epoch, and MAE accuracy convergence vs target threshold.
+   - **Markdown Link (🖼️ Static Figures Gallery)**: Direct top-nav link to [`figures.md`](report/figures.md) containing all high-resolution static figure visualizations.
 
 ---
 
