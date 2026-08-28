@@ -10,5 +10,6 @@ wheels/
 .venv
 
 # Directories
+logs/
 report/outputs/
 report/plots/
