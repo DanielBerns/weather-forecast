@@ -1,1 +1,255 @@
-<html>Test Report</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comodoro Rivadavia - Next-Day Weather Forecast & Evaluation System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+<body>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="header-title">
+            <h1>Next-Day Weather Forecast & Precision System</h1>
+            <p>Comodoro Rivadavia, Chubut, Argentina (Station SAVC / 87860)</p>
+        </div>
+        <div class="badge-group">
+            <span class="badge">Out-of-Sample Test: CRV2026.csv</span>
+            <span class="badge badge-emerald">Temporal Split: 1957–2024 (Train) | 2025 (Val) | 2026 (Test)</span>
+        </div>
+    </header>
+
+    <!-- Navigation Tab Bar -->
+    <nav class="nav-tabs-container">
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="tab-evaluation">
+                <span>📊 Model Evaluation & Live Forecast Engine</span>
+            </button>
+            <button class="nav-tab" data-tab="tab-data-quality">
+                <span>🔍 Data Quality & Split Analysis</span>
+            </button>
+            <button class="nav-tab" data-tab="tab-training">
+                <span>🔄 Training Evolution & Fit Diagnostics</span>
+            </button>
+            <a href="outputs/figures.md" target="_blank" class="nav-tab nav-tab-link">
+                <span>🖼️ Static Figures Gallery (Markdown) ↗</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="main-container">
+
+        <!-- TAB 1: MODEL EVALUATION & FORECAST ENGINE -->
+        <div id="tab-evaluation" class="tab-pane active">
+
+            <!-- KPI Cards Summary -->
+            <section class="glass-card">
+                <h2 class="card-title gradient-text">Out-of-Sample Performance Summary (2026 Test Set)</h2>
+                <div id="kpiCards" class="kpi-grid">
+                    <div class="kpi-card"><div class="kpi-label">Loading Metrics...</div></div>
+                </div>
+            </section>
+
+            <!-- Interactive 24-Hour Forecast Generator Form -->
+            <section class="glass-card" id="forecastGenerator">
+                <h2 class="card-title gradient-text">⚡ Interactive Next 24-Hour Forecast Generator</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                    Enter current local weather observations or choose a preset test observation to generate the next 24-hour temperature forecast profile and summary metrics (TMAX, TMIN, TAVG).
+                </p>
+
+                <form id="forecastGeneratorForm">
+                    <div class="forecast-form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="presetSelect">Select Observation Preset</label>
+                                <select id="presetSelect" class="form-control">
+                                    <option value="recent">Latest Observation (August 2026)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="currentTempInput">Current Temperature (°C)</label>
+                                <input type="number" id="currentTempInput" class="form-control" step="0.1" value="14.5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="currentDewInput">Current Dew Point (°C)</label>
+                                <input type="number" id="currentDewInput" class="form-control" step="0.1" value="8.2" required>
+                            </div>
+                            <button type="submit" class="btn-primary">Generate Next 24-Hour Forecast</button>
+                        </div>
+
+                        <div>
+                            <!-- Forecast Summary Results Box -->
+                            <div class="summary-cards-row">
+                                <div class="summary-metric-box tmax">
+                                    <div class="metric-num" id="resTmax">-- °C</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Predicted TMAX</div>
+                                </div>
+                                <div class="summary-metric-box tmin">
+                                    <div class="metric-num" id="resTmin">-- °C</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Predicted TMIN</div>
+                                </div>
+                                <div class="summary-metric-box tavg">
+                                    <div class="metric-num" id="resTavg">-- °C</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Predicted TAVG</div>
+                                </div>
+                            </div>
+
+                            <div id="plotlyFormResults" class="chart-container" style="min-height: 250px;"></div>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Model Leaderboard Table -->
+            <section class="glass-card">
+                <h2 class="card-title gradient-text">📊 Precision & Accuracy Evaluation Leaderboard</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+                    Comparative evaluation across 24-hour step multi-output models evaluated strictly on 2026 out-of-sample data (`CRV2026.csv`).
+                </p>
+                <div class="table-responsive">
+                    <table class="data-table" id="leaderboardTable">
+                        <thead>
+                            <tr>
+                                <th>Model Architecture</th>
+                                <th>MAE (°C)</th>
+                                <th>RMSE (°C)</th>
+                                <th>Acc (&plusmn;1.0°C)</th>
+                                <th>Acc (&plusmn;2.0°C)</th>
+                                <th>Directional F1</th>
+                                <th>R² Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamically populated by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Interactive Visual Evaluation Charts -->
+            <section class="glass-card">
+                <h2 class="card-title gradient-text">📈 Multi-Model Predictions & Time Series Evaluation</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+                    Select target variable and toggle model prediction overlays to compare performance across out-of-sample test timelines (`CRV2026.csv`).
+                </p>
+
+                <!-- Model & Target Filter Controls -->
+                <div class="control-panel" style="margin-bottom: 20px; background: rgba(30, 41, 59, 0.5); padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="targetMetricSelect" style="font-weight: 700; color: var(--primary-cyan); font-size: 0.9rem;">Target Variable:</label>
+                            <select id="targetMetricSelect" class="form-control" style="width: auto; padding: 6px 12px;">
+                                <option value="tmax">Next-24h TMAX (°C)</option>
+                                <option value="tmin">Next-24h TMIN (°C)</option>
+                                <option value="tavg">Next-24h TAVG (°C)</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btnSelectAllModels" class="btn-primary" style="padding: 4px 12px; font-size: 0.75rem; background: rgba(56, 189, 248, 0.2); border: 1px solid var(--primary-cyan);">Select All Models</button>
+                            <button id="btnSelectTopModels" class="btn-primary" style="padding: 4px 12px; font-size: 0.75rem; background: rgba(168, 85, 247, 0.2); border: 1px solid var(--violet);">Top Models Only</button>
+                        </div>
+                    </div>
+                    <div id="modelFilterCheckboxes" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <!-- Dynamically populated by script.js with filter pills for ALL 8 models -->
+                    </div>
+                </div>
+
+                <div id="plotlyTimeSeries" class="chart-container"></div>
+                <div id="plotly24hSample" class="chart-container" style="margin-top: 30px;"></div>
+                <div id="plotlyErrorDist" class="chart-container" style="margin-top: 30px;"></div>
+            </section>
+        </div>
+
+        <!-- TAB 2: DATA QUALITY & SPLIT ANALYSIS -->
+        <div id="tab-data-quality" class="tab-pane">
+            <section class="glass-card">
+                <h2 class="card-title gradient-text">🔍 Data Properties & Quality Analysis (Train, Val, Test)</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                    Comprehensive properties, summary statistics, histograms, and bad values detection across <strong>Train (&le;2024)</strong>, <strong>Validation (2025)</strong>, and <strong>Test (2026)</strong> splits.
+                </p>
+
+                <!-- Split Breakdown Cards -->
+                <div id="dataPropertiesCards" class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 24px;">
+                    <div class="kpi-card"><div class="kpi-label">Loading Data Properties...</div></div>
+                </div>
+
+                <!-- Bad Values & Outliers Detection Box -->
+                <div id="badValuesContainer" style="margin-bottom: 24px;"></div>
+
+                <!-- Statistics Table -->
+                <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 12px;">📊 Comparative Summary Statistics</h3>
+                <div class="table-responsive" style="margin-bottom: 24px;">
+                    <table class="data-table" id="dataStatsTable">
+                        <thead>
+                            <tr>
+                                <th>Dataset Split</th>
+                                <th>Variable</th>
+                                <th>Count</th>
+                                <th>Mean (°C)</th>
+                                <th>Std (°C)</th>
+                                <th>Min (°C)</th>
+                                <th>25%</th>
+                                <th>Median</th>
+                                <th>75%</th>
+                                <th>Max (°C)</th>
+                                <th>IQR Outliers</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Comparative Distribution Histograms -->
+                <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 12px;">📈 Temperature & Dew Point Distribution Plots</h3>
+                <div id="plotlyTempHist" class="chart-container"></div>
+                <div id="plotlyDewHist" class="chart-container" style="margin-top: 24px;"></div>
+            </section>
+        </div>
+
+        <!-- TAB 3: TRAINING EVOLUTION & FIT DIAGNOSTICS -->
+        <div id="tab-training" class="tab-pane">
+            <section class="glass-card">
+                <h2 class="card-title gradient-text">🔄 Multi-Model Training Evolution, Learning Rate Decay & Diagnostics</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                    Visualize training and validation loss, accuracy convergence (target MAE &lt; 1.0°C), and <strong>performance-based learning rate decay evolution</strong> across all trained neural and machine learning models.
+                </p>
+
+                <!-- Model Selection Control for Training Evolution -->
+                <div class="control-panel" style="margin-bottom: 24px; background: rgba(30, 41, 59, 0.5); padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <label for="modelHistorySelect" style="font-weight: 700; color: var(--primary-cyan); font-size: 0.95rem;">Select Model Training View:</label>
+                    <select id="modelHistorySelect" class="form-control" style="width: auto; min-width: 280px;">
+                        <option value="all">⚡ Compare All Models Evolution</option>
+                        <option value="Deep Learning (LSTM)">🧠 Deep Learning (LSTM)</option>
+                        <option value="Convolutional Neural Network (CNN)">👁️ Convolutional Neural Network (CNN)</option>
+                        <option value="Dense Neural Network">🕸️ Dense Neural Network</option>
+                        <option value="Linear Neural Network">📏 Linear Neural Network</option>
+                        <option value="Gradient Boosted Trees">🌲 Gradient Boosted Trees (GBDT)</option>
+                        <option value="Ridge Regression">📈 Ridge Regression</option>
+                    </select>
+                </div>
+
+                <!-- Training Diagnostics Banner -->
+                <div id="trainingDiagBanner" class="summary-cards-row" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+                    <div class="kpi-card"><div class="kpi-label">Loading Training Diagnostics...</div></div>
+                </div>
+
+                <!-- Loss, Accuracy, and Learning Rate Charts -->
+                <div id="plotlyLossChart" class="chart-container"></div>
+                <div id="plotlyAccuracyChart" class="chart-container" style="margin-top: 24px;"></div>
+                <div id="plotlyLREvolutionChart" class="chart-container" style="margin-top: 24px;"></div>
+            </section>
+        </div>
+
+
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
