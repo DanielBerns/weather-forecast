@@ -1,6 +1,8 @@
+import sys
 import os
 import json
 import shutil
+import yaml
 import argparse
 import numpy as np
 import pandas as pd
@@ -80,7 +82,15 @@ def setup_file_logging(logs_dir="logs"):
 
 def run_pipeline(config_path=None):
     # 1. Load YAML Configuration (and enforce git repo check)
-    cfg = load_config(config_path)
+    try:
+        cfg = load_config(config_path)
+    except (FileNotFoundError, ValueError, yaml.YAMLError) as e:
+        print("\n========================================================", file=sys.stderr)
+        print("ERROR: Configuration Initialization Failure", file=sys.stderr)
+        print("========================================================", file=sys.stderr)
+        print(f"{e}\n", file=sys.stderr)
+        sys.exit(1)
+
     config_dir = Path(cfg['_config_dir'])
 
     mode = cfg['pipeline']['mode']

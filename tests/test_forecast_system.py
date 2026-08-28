@@ -144,22 +144,63 @@ def test_reset_mode_directory_erasing():
 
 def test_sync_report_ui_files():
     from pathlib import Path
+    from unittest.mock import patch
     from forecast_system.pipeline import sync_report_ui_files
+
     with tempfile.TemporaryDirectory() as tmp_dir:
-        out_dir = Path(tmp_dir) / "report"
+        fake_repo = Path(tmp_dir) / "fake_repo"
+        fake_repo_report = fake_repo / "report"
+        fake_repo_report.mkdir(parents=True, exist_ok=True)
+
+        out_dir = Path(tmp_dir) / "external_report"
         out_dir.mkdir(parents=True, exist_ok=True)
 
         (out_dir / "index.html").write_text("<html>Test Report</html>")
         (out_dir / "script.js").write_text("// Test JS Script")
         (out_dir / "style.css").write_text("/* Test CSS Style */")
 
-        sync_report_ui_files(out_dir, Path.cwd())
+        with patch("forecast_system.pipeline.get_git_repo_root", return_value=fake_repo):
+            sync_report_ui_files(out_dir, fake_repo)
 
-        repo_report = Path.cwd() / "report"
-        assert (repo_report / "index.html").read_text() == "<html>Test Report</html>"
-        assert (repo_report / "script.js").read_text() == "// Test JS Script"
-        assert (repo_report / "style.css").read_text() == "/* Test CSS Style */"
+        assert (fake_repo_report / "index.html").read_text() == "<html>Test Report</html>"
+        assert (fake_repo_report / "script.js").read_text() == "// Test JS Script"
+        assert (fake_repo_report / "style.css").read_text() == "/* Test CSS Style */"
         print("✓ test_sync_report_ui_files passed!")
+
+def test_formatted_invalid_config_error():
+    import io
+    from contextlib import redirect_stderr
+    from forecast_system.pipeline import run_pipeline
+
+    # 1. Test non-existent file path
+    buf = io.StringIO()
+    try:
+        with redirect_stderr(buf):
+            run_pipeline("non_existent_config_file_12345.yaml")
+        assert False, "Expected SystemExit on non-existent config file"
+    except SystemExit as exc:
+        assert exc.code == 1
+
+    err_msg = buf.getvalue()
+    assert "ERROR: Configuration Initialization Failure" in err_msg
+    assert "Configuration file not found" in err_msg
+    assert "Traceback" not in err_msg
+
+    # 2. Test in-repo config file path
+    buf_repo = io.StringIO()
+    try:
+        with redirect_stderr(buf_repo):
+            run_pipeline("reset.yaml")
+        assert False, "Expected SystemExit on in-repo config file"
+    except SystemExit as exc:
+        assert exc.code == 1
+
+    err_repo_msg = buf_repo.getvalue()
+    assert "ERROR: Configuration Initialization Failure" in err_repo_msg
+    assert "inside the Git repository" in err_repo_msg or "within the Git repository" in err_repo_msg
+    assert "Traceback" not in err_repo_msg
+
+    print("✓ test_formatted_invalid_config_error passed!")
 
 def test_feature_engineering():
     dates = pd.date_range('2024-01-01', periods=300, freq='1h')
@@ -454,6 +495,7 @@ if __name__ == '__main__':
     test_create_config_dir_script()
     test_reset_mode_directory_erasing()
     test_sync_report_ui_files()
+    test_formatted_invalid_config_error()
     test_feature_engineering()
     test_data_quality_analysis()
     test_baselines_and_metrics()
