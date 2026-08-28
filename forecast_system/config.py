@@ -1,5 +1,6 @@
 import os
 import yaml
+import subprocess
 from pathlib import Path
 
 DEFAULT_CONFIG = {
@@ -141,40 +142,109 @@ DEFAULT_CONFIG = {
 }
 
 
+def get_git_repo_root(start_path=None):
+    """
+    Dynamically finds the root directory of the Git repository starting from start_path.
+    Does not use hardcoded paths.
+    """
+    if start_path is None:
+        p = Path.cwd().resolve()
+    else:
+        p = Path(start_path).resolve()
+    curr = p if p.is_dir() else p.parent
+
+    temp = curr
+    while True:
+        if (temp / ".git").exists():
+            return temp
+        if temp.parent == temp:
+            break
+        temp = temp.parent
+
+    try:
+        res = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=str(curr),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            return Path(res.stdout.strip()).resolve()
+    except Exception:
+        pass
+
+    return None
+
+
+def is_path_in_git_repo(target_path):
+    """
+    Returns (True, git_root) if target_path is located inside a Git repository.
+    """
+    target = Path(target_path).resolve()
+    git_root = get_git_repo_root(target)
+    if git_root is None:
+        git_root = get_git_repo_root(Path.cwd())
+    if git_root is None:
+        return False, None
+    try:
+        if target == git_root or git_root in target.parents:
+            return True, git_root
+    except Exception:
+        pass
+    return False, git_root
+
+
 def load_config(config_path=None):
     """
     Loads YAML configuration file and merges it with default settings.
-    
+    Refuses to run if config_path is inside the Git repository.
+
     Parameters:
     -----------
     config_path : str or Path, optional
-        Path to YAML file. If None, checks for default 'config.yaml' in current directory.
-        
+        Path to YAML file. If None, checks for default 'config.yaml'.
+
     Returns:
     --------
     dict
-        Merged configuration dictionary.
+        Merged configuration dictionary with metadata.
     """
     config = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULT_CONFIG.items()}
-    
+
     if config_path is None:
-        default_path = Path("config.yaml")
-        if default_path.exists():
-            config_path = default_path
-            
-    if config_path and Path(config_path).exists():
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                user_cfg = yaml.safe_load(f)
-            if user_cfg and isinstance(user_cfg, dict):
-                for section, vals in user_cfg.items():
-                    if section in config and isinstance(vals, dict):
-                        config[section].update(vals)
-                    else:
-                        config[section] = vals
-                print(f"✓ Successfully loaded configuration from {config_path}", flush=True)
-        except Exception as e:
-            print(f"Warning: Could not parse config file {config_path} ({e}). Using defaults.", flush=True)
-            
+        config_path = Path("config.yaml")
+
+    resolved_path = Path(config_path).resolve()
+
+    if not resolved_path.exists():
+        raise FileNotFoundError(f"Configuration file not found at '{resolved_path}'")
+
+    in_repo, git_root = is_path_in_git_repo(resolved_path)
+    if in_repo:
+        raise ValueError(
+            f"Refusing to run: Configuration file '{resolved_path}' is inside the Git repository at '{git_root}'. "
+            f"Please place configuration files outside the Git repository."
+        )
+
+    try:
+        with open(resolved_path, 'r', encoding='utf-8') as f:
+            user_cfg = yaml.safe_load(f)
+        if user_cfg and isinstance(user_cfg, dict):
+            for section, vals in user_cfg.items():
+                if section in config and isinstance(vals, dict):
+                    config[section].update(vals)
+                else:
+                    config[section] = vals
+            print(f"✓ Successfully loaded configuration from {resolved_path}", flush=True)
+    except Exception as e:
+        if isinstance(e, ValueError):
+            raise
+        print(f"Warning: Could not parse config file {resolved_path} ({e}). Using defaults.", flush=True)
+
+    config['_config_path'] = str(resolved_path)
+    config['_config_dir'] = str(resolved_path.parent)
     return config
+
 

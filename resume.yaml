@@ -8,7 +8,7 @@ pipeline:
 
 optimization:
   target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
-  epochs_per_iter: 2           # Number of training epochs executed per iteration block
+  epochs_per_iter: 20          # Number of training epochs executed per iteration block
   max_iters: 3                 # Maximum number of restartable training iteration passes
   lr_decay_enabled: true       # Enable/disable performance-based learning rate decay policy
   lr_decay_policy: "plateau"   # LR decay policy: "plateau", "exponential_plateau", or "step_plateau"

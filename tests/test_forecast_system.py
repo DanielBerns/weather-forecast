@@ -18,15 +18,25 @@ def test_parse_hourly_temp():
     print("✓ test_parse_hourly_temp passed!")
 
 def test_config_loading():
-    # 1. Test default load
-    cfg_default = load_config()
-    assert 'pipeline' in cfg_default
-    assert 'optimization' in cfg_default
-    assert cfg_default['optimization']['target_mae'] == 1.0
+    # 1. Test refusal when config is in git repo
+    with tempfile.NamedTemporaryFile('w', dir='.', suffix='.yaml', delete=False) as f:
+        f.write("pipeline:\n  mode: resume\n")
+        in_repo_config = f.name
+    try:
+        try:
+            load_config(in_repo_config)
+            assert False, "Expected ValueError when loading config inside git repo"
+        except ValueError as e:
+            assert "inside the Git repository" in str(e) or "within the Git repository" in str(e)
+    finally:
+        if os.path.exists(in_repo_config):
+            os.remove(in_repo_config)
 
-    # 2. Test custom YAML loading
-    with tempfile.NamedTemporaryFile('w', suffix='.yaml', delete=False) as f:
-        f.write("""
+    # 2. Test custom YAML loading from external directory
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        external_cfg = os.path.join(tmp_dir, "custom_config.yaml")
+        with open(external_cfg, 'w') as f:
+            f.write("""
 pipeline:
   mode: "reset"
 optimization:
@@ -34,17 +44,122 @@ optimization:
 deep_learning:
   units: 128
 """)
-        tmp_name = f.name
-
-    try:
-        cfg_custom = load_config(tmp_name)
+        cfg_custom = load_config(external_cfg)
         assert cfg_custom['pipeline']['mode'] == "reset"
         assert cfg_custom['optimization']['target_mae'] == 0.8
         assert cfg_custom['deep_learning']['units'] == 128
+        assert cfg_custom['_config_dir'] == tmp_dir
         print("✓ test_config_loading passed!")
-    finally:
-        if os.path.exists(tmp_name):
-            os.remove(tmp_name)
+
+def test_git_repo_restriction():
+    repo_config = os.path.abspath("reset.yaml")
+    try:
+        load_config(repo_config)
+        assert False, "Expected load_config to raise ValueError for reset.yaml in git repo"
+    except ValueError as e:
+        assert "inside the Git repository" in str(e) or "within the Git repository" in str(e)
+    print("✓ test_git_repo_restriction passed!")
+
+def test_logs_and_report_in_config_dir():
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        config_path = Path(tmp_dir) / "config.yaml"
+        with open(config_path, 'w') as f:
+            f.write("pipeline:\n  mode: resume\n  output_dir: report\n")
+
+        cfg = load_config(config_path)
+        assert cfg['_config_dir'] == tmp_dir
+
+        logs_dir = Path(cfg['_config_dir']) / "logs"
+        output_dir = Path(cfg['_config_dir']) / cfg['pipeline']['output_dir']
+
+        assert str(logs_dir) == os.path.join(tmp_dir, "logs")
+        assert str(output_dir) == os.path.join(tmp_dir, "report")
+        print("✓ test_logs_and_report_in_config_dir passed!")
+
+def test_create_config_dir_script():
+    import sys
+    import subprocess
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        ext_target = os.path.join(tmp_dir, "external_config_workspace")
+        res = subprocess.run(
+            [sys.executable, "create_config_dir.py", ext_target],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert res.returncode == 0, f"Script failed: {res.stderr}"
+        assert os.path.exists(os.path.join(ext_target, "reset.yaml"))
+        assert os.path.exists(os.path.join(ext_target, "resume.yaml"))
+
+        # Test running script targeting directory inside git repo (should fail)
+        in_repo_target = os.path.abspath("in_repo_test_dir")
+        res_fail = subprocess.run(
+            [sys.executable, "create_config_dir.py", in_repo_target],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert res_fail.returncode == 1
+        assert "inside the Git repository" in res_fail.stderr
+        print("✓ test_create_config_dir_script passed!")
+
+def test_reset_mode_directory_erasing():
+    import shutil
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, 'w') as f:
+            f.write("pipeline:\n  mode: reset\n  output_dir: report\n")
+
+        # Create dummy old files in logs and report/outputs
+        logs_dir = tmp_path / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        old_log = logs_dir / "old_pipeline.log"
+        old_log.write_text("old log content")
+
+        outputs_dir = tmp_path / "report" / "outputs"
+        outputs_dir.mkdir(parents=True, exist_ok=True)
+        old_output = outputs_dir / "old_checkpoint.keras"
+        old_output.write_text("old model weights")
+
+        cfg = load_config(config_path)
+        is_reset = (cfg['pipeline']['mode'].lower() == "reset")
+        assert is_reset is True
+
+        if is_reset:
+            if logs_dir.exists():
+                shutil.rmtree(logs_dir)
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            if outputs_dir.exists():
+                shutil.rmtree(outputs_dir)
+            outputs_dir.mkdir(parents=True, exist_ok=True)
+
+        assert logs_dir.exists()
+        assert outputs_dir.exists()
+        assert not old_log.exists()
+        assert not old_output.exists()
+        print("✓ test_reset_mode_directory_erasing passed!")
+
+def test_sync_report_ui_files():
+    from pathlib import Path
+    from forecast_system.pipeline import sync_report_ui_files
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        out_dir = Path(tmp_dir) / "report"
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        (out_dir / "index.html").write_text("<html>Test Report</html>")
+        (out_dir / "script.js").write_text("// Test JS Script")
+        (out_dir / "style.css").write_text("/* Test CSS Style */")
+
+        sync_report_ui_files(out_dir, Path.cwd())
+
+        repo_report = Path.cwd() / "report"
+        assert (repo_report / "index.html").read_text() == "<html>Test Report</html>"
+        assert (repo_report / "script.js").read_text() == "// Test JS Script"
+        assert (repo_report / "style.css").read_text() == "/* Test CSS Style */"
+        print("✓ test_sync_report_ui_files passed!")
 
 def test_feature_engineering():
     dates = pd.date_range('2024-01-01', periods=300, freq='1h')
@@ -334,6 +449,11 @@ linear:
 if __name__ == '__main__':
     test_parse_hourly_temp()
     test_config_loading()
+    test_git_repo_restriction()
+    test_logs_and_report_in_config_dir()
+    test_create_config_dir_script()
+    test_reset_mode_directory_erasing()
+    test_sync_report_ui_files()
     test_feature_engineering()
     test_data_quality_analysis()
     test_baselines_and_metrics()

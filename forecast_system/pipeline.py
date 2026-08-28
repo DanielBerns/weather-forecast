@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import argparse
 import numpy as np
 import pandas as pd
@@ -7,7 +8,7 @@ from pathlib import Path
 
 import logging
 from datetime import datetime
-from forecast_system.config import load_config
+from forecast_system.config import load_config, get_git_repo_root
 from forecast_system.data.loader import load_combined_dataset, get_train_val_test_splits
 from forecast_system.data.feature_engineering import create_features_and_targets
 from forecast_system.data.quality_analysis import export_data_properties_json
@@ -20,6 +21,41 @@ from forecast_system.models.deep_learning import (
     LinearForecastModel
 )
 from forecast_system.evaluation.evaluator import ForecastEvaluator
+
+
+def sync_report_ui_files(output_dir, config_dir):
+    """
+    Syncs report UI files (index.html, script.js, style.css) between output_dir
+    and the Git repository's report directory.
+    """
+    git_root = get_git_repo_root(config_dir)
+    if not git_root:
+        git_root = get_git_repo_root(Path.cwd())
+    if not git_root:
+        return
+
+    git_report_dir = git_root / "report"
+    git_report_dir.mkdir(parents=True, exist_ok=True)
+    ui_files = ["index.html", "script.js", "style.css"]
+
+    output_dir = Path(output_dir)
+
+    # 1. Copy template files from git repo report/ to output_dir if missing
+    if output_dir != git_report_dir:
+        for fname in ui_files:
+            src = git_report_dir / fname
+            dst = output_dir / fname
+            if src.exists() and not dst.exists():
+                shutil.copy2(src, dst)
+
+    # 2. Copy latest version from output_dir to git repo report/
+    for fname in ui_files:
+        src = output_dir / fname
+        dst = git_report_dir / fname
+        if src.exists() and src.resolve() != dst.resolve():
+            shutil.copy2(src, dst)
+            print(f"✓ Copied latest version of {fname} -> {dst}")
+
 
 def setup_file_logging(logs_dir="logs"):
     logs_dir = Path(logs_dir)
@@ -43,16 +79,47 @@ def setup_file_logging(logs_dir="logs"):
     return log_file
 
 def run_pipeline(config_path=None):
-    log_file = setup_file_logging()
-    print(f"Logging extensive pipeline diagnostics to '{log_file}'")
-
-    # 1. Load YAML Configuration
+    # 1. Load YAML Configuration (and enforce git repo check)
     cfg = load_config(config_path)
+    config_dir = Path(cfg['_config_dir'])
 
     mode = cfg['pipeline']['mode']
-    output_dir = Path(cfg['pipeline']['output_dir'])
+    is_reset = (mode.lower() == "reset")
+
+    raw_output_dir = Path(cfg['pipeline']['output_dir'])
+    if raw_output_dir.is_absolute():
+        output_dir = raw_output_dir
+    else:
+        output_dir = config_dir / raw_output_dir
+
     outputs_dir = output_dir / "outputs"
-    outputs_dir.mkdir(parents=True, exist_ok=True)
+    logs_dir = config_dir / "logs"
+
+    # Reset mode: Erase and recreate logs and report/outputs directories
+    if is_reset:
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            handler.close()
+            root_logger.removeHandler(handler)
+
+        if logs_dir.exists():
+            shutil.rmtree(logs_dir)
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        print(f"✓ [RESET MODE] Erased and recreated logs directory at '{logs_dir}'")
+
+        if outputs_dir.exists():
+            shutil.rmtree(outputs_dir)
+        outputs_dir.mkdir(parents=True, exist_ok=True)
+        print(f"✓ [RESET MODE] Erased and recreated outputs directory at '{outputs_dir}'")
+    else:
+        outputs_dir.mkdir(parents=True, exist_ok=True)
+
+    # 2. Set up logging inside the config directory's logs/ folder
+    log_file = setup_file_logging(logs_dir=logs_dir)
+    print(f"Logging extensive pipeline diagnostics to '{log_file}'")
+
+    # Sync UI template files to output_dir
+    sync_report_ui_files(output_dir, config_dir)
 
     epochs_per_iter = cfg['optimization']['epochs_per_iter']
     max_iters = cfg['optimization']['max_iters']
@@ -380,6 +447,10 @@ def run_pipeline(config_path=None):
         json.dump(time_series_export, f, indent=2)
 
     print(f"Exported test time series predictions to {outputs_dir / 'test_predictions.json'}")
+
+    # Copy latest version of report/index.html, script.js, style.css to git repo report/
+    sync_report_ui_files(output_dir, config_dir)
+
     print("\nPipeline execution complete!")
 
 def main():
