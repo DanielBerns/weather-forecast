@@ -51,8 +51,9 @@ def create_external_config_dir(target_dir_path):
 
     print("\nInitialization complete!")
     print(f"You can now run the pipeline using one of your external configuration files, e.g.:")
-    print(f"  python forecast_system/pipeline.py -c {target_dir / 'reset.yaml'}")
-    print(f"  python forecast_system/pipeline.py -c {target_dir / 'resume.yaml'}")
+    print(f"  uv run forecast-pipeline -c {target_dir / 'reset.yaml'}")
+    print(f"  uv run forecast-pipeline -c {target_dir / 'resume.yaml'}")
+
 
 
 def main():
