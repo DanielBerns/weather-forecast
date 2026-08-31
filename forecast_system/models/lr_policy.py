@@ -28,6 +28,8 @@ class PerformanceLRDecayPolicy:
         min_lr: float = 1e-6,
         min_delta: float = 1e-4,
         cooldown: int = 0,
+        restart_patience: int = 6,
+        restart_factor: float = 0.5,
         monitor: str = 'val_loss',
         mode: str = 'min',
         initial_lr: Optional[float] = None
@@ -39,12 +41,15 @@ class PerformanceLRDecayPolicy:
         self.min_lr = float(min_lr)
         self.min_delta = float(min_delta)
         self.cooldown = int(cooldown)
+        self.restart_patience = int(restart_patience)
+        self.restart_factor = float(restart_factor)
         self.monitor = monitor
         self.mode = mode.lower()
         self.initial_lr = initial_lr
 
         self.best_metric: float = float('inf') if self.mode == 'min' else float('-inf')
         self.wait_count: int = 0
+        self.floor_wait_count: int = 0
         self.cooldown_counter: int = 0
         self.decay_count: int = 0
         self.decay_events: list = []
@@ -53,6 +58,7 @@ class PerformanceLRDecayPolicy:
         """Resets tracking state for a new training run."""
         self.best_metric = float('inf') if self.mode == 'min' else float('-inf')
         self.wait_count = 0
+        self.floor_wait_count = 0
         self.cooldown_counter = 0
         self.decay_count = 0
         self.decay_events = []
@@ -98,6 +104,7 @@ class PerformanceLRDecayPolicy:
             old_best = self.best_metric
             self.best_metric = current_metric
             self.wait_count = 0
+            self.floor_wait_count = 0
             logger.debug(
                 f"[{model_name}] {step_type} {step_idx}: Performance improved ({self.monitor}: {old_best:.5f} -> {current_metric:.5f}). "
                 f"Reset wait count."
@@ -127,6 +134,7 @@ class PerformanceLRDecayPolicy:
             if current_lr - new_lr > 1e-12:
                 self.cooldown_counter = self.cooldown
                 self.wait_count = 0
+                self.floor_wait_count = 0
 
                 reason = (
                     f"Performance metric '{self.monitor}' failed to improve by >={self.min_delta} "
@@ -158,10 +166,51 @@ class PerformanceLRDecayPolicy:
 
                 return new_lr, True, event_dict
             else:
+                # Learning rate reached floor limit (min_lr)
+                self.floor_wait_count += 1
                 logger.info(
                     f"[{model_name}] {step_type} {step_idx}: Learning rate reached floor limit (min_lr = {self.min_lr:.6e}). "
-                    f"Cannot decay further."
+                    f"Stagnation count at floor: {self.floor_wait_count}/{self.restart_patience}."
                 )
+
+                if self.restart_patience > 0 and self.floor_wait_count >= self.restart_patience:
+                    # TRIGGER WARM RESTART BUMP
+                    bump_lr = max(self.initial_lr * self.restart_factor, self.min_lr * 2.0)
+                    self.decay_count = 0
+                    self.wait_count = 0
+                    self.floor_wait_count = 0
+                    self.cooldown_counter = max(self.cooldown * 2, 2)
+
+                    reason = (
+                        f"Performance metric '{self.monitor}' flattened at LR floor limit ({self.min_lr:.6e}) "
+                        f"for {self.restart_patience} consecutive {step_type.lower()}s. "
+                        f"Triggered Warm Restart Bump to shake optimizer state."
+                    )
+
+                    event_dict = {
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'model_name': model_name,
+                        'step_type': step_type,
+                        'step': step_idx,
+                        'monitor_metric': self.monitor,
+                        'metric_value': round(float(current_metric), 5),
+                        'best_metric_value': round(float(self.best_metric), 5),
+                        'old_lr': float(current_lr),
+                        'new_lr': float(bump_lr),
+                        'policy': 'warm_restart_bump',
+                        'decay_count': 0,
+                        'reason': reason
+                    }
+
+                    self.decay_events.append(event_dict)
+
+                    logger.info(
+                        f"\n⚡ [LR RESTART BUMP TRIGGERED] [{model_name}] {step_type} {step_idx}: "
+                        f"Learning rate boosted from {current_lr:.6e} up to {bump_lr:.6e}! "
+                        f"Reason: {reason}\n"
+                    )
+
+                    return bump_lr, True, event_dict
 
         return current_lr, False, None
 

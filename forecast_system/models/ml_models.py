@@ -27,7 +27,9 @@ class GradientBoostingForecast:
         lr_decay_patience: int = 2,
         min_lr: float = 1e-5,
         min_delta: float = 1e-4,
-        cooldown: int = 0
+        cooldown: int = 0,
+        lr_restart_patience: int = 6,
+        lr_restart_factor: float = 0.5
     ):
         self.random_state = random_state
         self.max_iter = max_iter
@@ -41,6 +43,8 @@ class GradientBoostingForecast:
             min_lr=min_lr,
             min_delta=min_delta,
             cooldown=cooldown,
+            restart_patience=lr_restart_patience,
+            restart_factor=lr_restart_factor,
             monitor='val_mae',
             mode='min',
             initial_lr=learning_rate
@@ -201,7 +205,9 @@ class RidgeLinearForecast:
         lr_decay_patience: int = 2,
         min_lr: float = 1e-6,
         min_delta: float = 1e-4,
-        cooldown: int = 0
+        cooldown: int = 0,
+        lr_restart_patience: int = 6,
+        lr_restart_factor: float = 0.5
     ):
         self.alpha = alpha
         self.learning_rate = learning_rate
@@ -221,6 +227,8 @@ class RidgeLinearForecast:
             min_lr=min_lr,
             min_delta=min_delta,
             cooldown=cooldown,
+            restart_patience=lr_restart_patience,
+            restart_factor=lr_restart_factor,
             monitor='val_mae',
             mode='min',
             initial_lr=learning_rate

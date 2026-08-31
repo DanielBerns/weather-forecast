@@ -8,15 +8,17 @@ pipeline:
 
 optimization:
   target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
-  epochs_per_iter: 20          # Number of training epochs executed per iteration block
-  max_iters: 3                 # Maximum number of restartable training iteration passes
+  epochs_per_iter: 5           # Number of training epochs executed per iteration block
+  max_iters: 6                 # Maximum number of restartable training iteration passes
   lr_decay_enabled: true       # Enable/disable performance-based learning rate decay policy
   lr_decay_policy: "plateau"   # LR decay policy: "plateau", "exponential_plateau", or "step_plateau"
-  lr_decay_factor: 0.75        # Decay reduction factor (e.g. 0.5 reduces LR by half)
-  lr_decay_patience: 8         # Patience in epochs/iterations before decaying LR
-  lr_min: 1e-5                 # Minimum learning rate floor limit
-  lr_decay_threshold: 1e-5     # Minimum delta metric change to qualify as performance improvement
+  lr_decay_factor: 0.5         # Decay reduction factor (e.g. 0.5 reduces LR by half)
+  lr_decay_patience: 6         # Patience in epochs/iterations before decaying LR
+  lr_min: 0.00001              # Minimum learning rate floor limit
+  lr_decay_threshold: 0.00001  # Minimum delta metric change to qualify as performance improvement
   lr_cooldown: 3               # Cooldown iterations after LR reduction
+  lr_restart_patience: 6       # Stagnation epochs at floor limit before triggering Warm Restart Bump
+  lr_restart_factor: 0.5       # Warm restart factor to boost LR (bump_lr = restart_factor * initial_lr)
 
 # --- Model Specific Parametrizations & Run Flags ---
 

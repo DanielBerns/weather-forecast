@@ -29,7 +29,9 @@ class CNNForecastModel:
         lr_decay_patience: int = 2,
         lr_min: float = 1e-6,
         lr_decay_threshold: float = 1e-4,
-        lr_cooldown: int = 0
+        lr_cooldown: int = 0,
+        lr_restart_patience: int = 6,
+        lr_restart_factor: float = 0.5
     ):
         self.filters = filters
         self.kernel_size = kernel_size
@@ -50,6 +52,8 @@ class CNNForecastModel:
             min_lr=lr_min,
             min_delta=lr_decay_threshold,
             cooldown=lr_cooldown,
+            restart_patience=lr_restart_patience,
+            restart_factor=lr_restart_factor,
             monitor='val_loss',
             mode='min',
             initial_lr=learning_rate
@@ -138,7 +142,12 @@ class CNNForecastModel:
                             self.model = keras.models.load_model(checkpoint_path)
                         else:
                             self.model.load_weights(checkpoint_path)
-                        logger.info(f"✓ Loaded saved CNN model from {checkpoint_path}")
+                        if hasattr(self.model.optimizer, 'learning_rate'):
+                            if hasattr(self.model.optimizer.learning_rate, 'assign'):
+                                self.model.optimizer.learning_rate.assign(self.learning_rate)
+                            else:
+                                tf.keras.backend.set_value(self.model.optimizer.learning_rate, self.learning_rate)
+                        logger.info(f"✓ Loaded saved CNN model from {checkpoint_path} (Active LR set to {self.learning_rate})")
                     except Exception as e:
                         logger.info(f"Note: Could not load existing checkpoint ({e}). Training clean model.")
 

@@ -17,6 +17,8 @@ optimization:
   lr_min: 0.000001             # Minimum learning rate floor limit
   lr_decay_threshold: 0.0001   # Minimum delta metric change to qualify as performance improvement
   lr_cooldown: 0               # Cooldown iterations after LR reduction
+  lr_restart_patience: 6       # Stagnation epochs at floor limit before triggering Warm Restart Bump
+  lr_restart_factor: 0.5       # Warm restart factor to boost LR (bump_lr = restart_factor * initial_lr)
 
 # --- Model Specific Parametrizations & Run Flags ---
 

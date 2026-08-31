@@ -190,6 +190,8 @@ def run_pipeline(config_path=None):
     default_lr_min = opt_cfg.get('lr_min', 1e-6)
     default_lr_threshold = opt_cfg.get('lr_decay_threshold', 1e-4)
     default_cooldown = opt_cfg.get('lr_cooldown', 0)
+    default_restart_patience = opt_cfg.get('lr_restart_patience', 6)
+    default_restart_factor = opt_cfg.get('lr_restart_factor', 0.5)
 
     lstm_cfg = {**cfg.get('deep_learning', {}), **cfg.get('lstm', {})}
     cnn_cfg = cfg.get('cnn', {})
@@ -234,7 +236,9 @@ def run_pipeline(config_path=None):
             lr_decay_patience=ridge_cfg.get('lr_decay_patience', default_decay_patience),
             min_lr=ridge_cfg.get('lr_min', default_lr_min),
             min_delta=ridge_cfg.get('lr_decay_threshold', default_lr_threshold),
-            cooldown=ridge_cfg.get('lr_cooldown', default_cooldown)
+            cooldown=ridge_cfg.get('lr_cooldown', default_cooldown),
+            lr_restart_patience=ridge_cfg.get('lr_restart_patience', default_restart_patience),
+            lr_restart_factor=ridge_cfg.get('lr_restart_factor', default_restart_factor)
         ).fit(X_train, Y_h_train, Y_s_train, X_val=X_val, Y_hourly_val=Y_h_val, Y_summary_val=Y_s_val)
         models_dict['Ridge Regression'] = ridge_model
         if hasattr(ridge_model, 'training_history') and ridge_model.training_history:
@@ -258,7 +262,9 @@ def run_pipeline(config_path=None):
                 lr_decay_patience=gbdt_cfg.get('lr_decay_patience', default_decay_patience),
                 min_lr=gbdt_cfg.get('lr_min', 1e-5),
                 min_delta=gbdt_cfg.get('lr_decay_threshold', default_lr_threshold),
-                cooldown=gbdt_cfg.get('lr_cooldown', default_cooldown)
+                cooldown=gbdt_cfg.get('lr_cooldown', default_cooldown),
+                lr_restart_patience=gbdt_cfg.get('lr_restart_patience', default_restart_patience),
+                lr_restart_factor=gbdt_cfg.get('lr_restart_factor', default_restart_factor)
             ).fit(X_train, Y_h_train, Y_s_train, X_val=X_val, Y_hourly_val=Y_h_val, Y_summary_val=Y_s_val)
             gbdt_model.save(gbdt_checkpoint_file)
             print(f"Saved Gradient Boosted Trees checkpoint to {gbdt_checkpoint_file}")
@@ -279,7 +285,9 @@ def run_pipeline(config_path=None):
             lr_decay_patience=lstm_cfg.get('lr_decay_patience', default_decay_patience),
             lr_min=lstm_cfg.get('lr_min', default_lr_min),
             lr_decay_threshold=lstm_cfg.get('lr_decay_threshold', default_lr_threshold),
-            lr_cooldown=lstm_cfg.get('lr_cooldown', default_cooldown)
+            lr_cooldown=lstm_cfg.get('lr_cooldown', default_cooldown),
+            lr_restart_patience=lstm_cfg.get('lr_restart_patience', default_restart_patience),
+            lr_restart_factor=lstm_cfg.get('lr_restart_factor', default_restart_factor)
         )
         checkpoint_file = outputs_dir / "lstm_checkpoint.keras"
         history_file = outputs_dir / "training_history.json"
@@ -321,7 +329,9 @@ def run_pipeline(config_path=None):
             lr_decay_patience=cnn_cfg.get('lr_decay_patience', default_decay_patience),
             lr_min=cnn_cfg.get('lr_min', default_lr_min),
             lr_decay_threshold=cnn_cfg.get('lr_decay_threshold', default_lr_threshold),
-            lr_cooldown=cnn_cfg.get('lr_cooldown', default_cooldown)
+            lr_cooldown=cnn_cfg.get('lr_cooldown', default_cooldown),
+            lr_restart_patience=cnn_cfg.get('lr_restart_patience', default_restart_patience),
+            lr_restart_factor=cnn_cfg.get('lr_restart_factor', default_restart_factor)
         )
         checkpoint_file = outputs_dir / "cnn_checkpoint.keras"
         history_file = outputs_dir / "cnn_training_history.json"
@@ -356,7 +366,9 @@ def run_pipeline(config_path=None):
             lr_decay_patience=dense_cfg.get('lr_decay_patience', default_decay_patience),
             lr_min=dense_cfg.get('lr_min', default_lr_min),
             lr_decay_threshold=dense_cfg.get('lr_decay_threshold', default_lr_threshold),
-            lr_cooldown=dense_cfg.get('lr_cooldown', default_cooldown)
+            lr_cooldown=dense_cfg.get('lr_cooldown', default_cooldown),
+            lr_restart_patience=dense_cfg.get('lr_restart_patience', default_restart_patience),
+            lr_restart_factor=dense_cfg.get('lr_restart_factor', default_restart_factor)
         )
         checkpoint_file = outputs_dir / "dense_checkpoint.keras"
         history_file = outputs_dir / "dense_training_history.json"
@@ -389,7 +401,9 @@ def run_pipeline(config_path=None):
             lr_decay_patience=linear_cfg.get('lr_decay_patience', default_decay_patience),
             lr_min=linear_cfg.get('lr_min', default_lr_min),
             lr_decay_threshold=linear_cfg.get('lr_decay_threshold', default_lr_threshold),
-            lr_cooldown=linear_cfg.get('lr_cooldown', default_cooldown)
+            lr_cooldown=linear_cfg.get('lr_cooldown', default_cooldown),
+            lr_restart_patience=linear_cfg.get('lr_restart_patience', default_restart_patience),
+            lr_restart_factor=linear_cfg.get('lr_restart_factor', default_restart_factor)
         )
         checkpoint_file = outputs_dir / "linear_checkpoint.keras"
         history_file = outputs_dir / "linear_training_history.json"

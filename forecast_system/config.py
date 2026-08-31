@@ -20,7 +20,9 @@ DEFAULT_CONFIG = {
         'lr_decay_patience': 2,
         'lr_min': 1e-6,
         'lr_decay_threshold': 1e-4,
-        'lr_cooldown': 0
+        'lr_cooldown': 0,
+        'lr_restart_patience': 6,
+        'lr_restart_factor': 0.5
     },
     'persistence': {
         'enabled': True
