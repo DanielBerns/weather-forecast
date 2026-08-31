@@ -11,7 +11,7 @@ optimization:
   epochs_per_iter: 5           # Number of training epochs executed per iteration block
   max_iters: 6                 # Maximum number of restartable training iteration passes
   lr_decay_enabled: true       # Enable/disable performance-based learning rate decay policy
-  lr_decay_policy: "plateau"   # LR decay policy: "plateau", "exponential_plateau", or "step_plateau"
+  lr_decay_policy: "plateau_restart" # Policy strategy: "plateau", "plateau_restart", "exponential_plateau"
   lr_decay_factor: 0.5         # Decay reduction factor (e.g. 0.5 reduces LR by half)
   lr_decay_patience: 6         # Patience in epochs/iterations before decaying LR
   lr_min: 0.00001              # Minimum learning rate floor limit
@@ -33,9 +33,12 @@ ridge:
   alpha: 1.0                   # L2 regularization strength for Ridge regression
   learning_rate: 0.01          # Base SGD learning rate for Ridge optimization
   lr_decay_enabled: true       # Enable LR decay policy on Ridge training
-  lr_decay_policy: "plateau"   # Policy strategy for performance-based LR decay
+  lr_decay_policy: "plateau_restart"
   lr_decay_factor: 0.5         # Factor by which LR is reduced upon plateau
-  lr_decay_patience: 2         # Number of iterations without improvement before LR decay
+  lr_decay_patience: 6         # Number of iterations without improvement before LR decay
+  lr_cooldown: 3
+  lr_restart_patience: 6
+  lr_restart_factor: 0.5
 
 gbdt:
   enabled: true                # Enable/disable Gradient Boosted Trees (HistGradientBoosting) model
@@ -43,9 +46,12 @@ gbdt:
   learning_rate: 0.1           # Initial learning rate for gradient boosting
   random_state: 42             # Random state seed for reproducibility
   lr_decay_enabled: true       # Enable LR decay policy across boosting stages
-  lr_decay_policy: "plateau"   # Policy strategy for performance-based LR decay
+  lr_decay_policy: "plateau_restart"
   lr_decay_factor: 0.5         # Factor by which LR is reduced upon plateau
-  lr_decay_patience: 2         # Number of iterations without improvement before LR decay
+  lr_decay_patience: 6         # Number of iterations without improvement before LR decay
+  lr_cooldown: 3
+  lr_restart_patience: 6
+  lr_restart_factor: 0.5
 
 lstm:
   enabled: true                # Enable/disable LSTM Deep Learning model
@@ -55,9 +61,12 @@ lstm:
   patience: 10                 # Early stopping patience in epochs
   dropout: 0.2                 # Dropout rate for regularization
   lr_decay_enabled: true       # Enable performance-based learning rate decay
-  lr_decay_policy: "plateau"   # Policy: "plateau", "exponential_plateau", "step_plateau"
+  lr_decay_policy: "plateau_restart"
   lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
-  lr_decay_patience: 2         # Epochs without validation improvement before LR decay
+  lr_decay_patience: 6         # Epochs without validation improvement before LR decay
+  lr_cooldown: 3
+  lr_restart_patience: 6
+  lr_restart_factor: 0.5
 
 cnn:
   enabled: true                # Enable/disable Convolutional Neural Network (CNN) model
@@ -68,9 +77,12 @@ cnn:
   patience: 10                 # Early stopping patience in epochs
   dropout: 0.2                 # Dropout rate for regularization
   lr_decay_enabled: true       # Enable performance-based learning rate decay
-  lr_decay_policy: "plateau"   # Policy strategy for LR decay
+  lr_decay_policy: "plateau_restart"
   lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
-  lr_decay_patience: 2         # Epochs without validation improvement before LR decay
+  lr_decay_patience: 6         # Epochs without validation improvement before LR decay
+  lr_cooldown: 3
+  lr_restart_patience: 6
+  lr_restart_factor: 0.5
 
 dense:
   enabled: true                # Enable/disable Dense Neural Network model
@@ -80,9 +92,12 @@ dense:
   patience: 10                 # Early stopping patience in epochs
   dropout: 0.2                 # Dropout rate for regularization
   lr_decay_enabled: true       # Enable performance-based learning rate decay
-  lr_decay_policy: "plateau"   # Policy strategy for LR decay
+  lr_decay_policy: "plateau_restart"
   lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
-  lr_decay_patience: 2         # Epochs without validation improvement before LR decay
+  lr_decay_patience: 6         # Epochs without validation improvement before LR decay
+  lr_cooldown: 3
+  lr_restart_patience: 6
+  lr_restart_factor: 0.5
 
 linear:
   enabled: true                # Enable/disable Linear Neural Network model
@@ -90,9 +105,12 @@ linear:
   batch_size: 64               # Batch size for mini-batch training
   patience: 10                 # Early stopping patience in epochs
   lr_decay_enabled: true       # Enable performance-based learning rate decay
-  lr_decay_policy: "plateau"   # Policy strategy for LR decay
+  lr_decay_policy: "plateau_restart"
   lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
-  lr_decay_patience: 2         # Epochs without validation improvement before LR decay
+  lr_decay_patience: 6         # Epochs without validation improvement before LR decay
+  lr_cooldown: 3
+  lr_restart_patience: 6
+  lr_restart_factor: 0.5
 
 data_quality:
   temp_min: -30.0              # Physical minimum temperature threshold (°C)
