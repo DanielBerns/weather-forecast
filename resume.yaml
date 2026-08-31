@@ -12,11 +12,11 @@ optimization:
   max_iters: 3                 # Maximum number of restartable training iteration passes
   lr_decay_enabled: true       # Enable/disable performance-based learning rate decay policy
   lr_decay_policy: "plateau"   # LR decay policy: "plateau", "exponential_plateau", or "step_plateau"
-  lr_decay_factor: 0.5         # Decay reduction factor (e.g. 0.5 reduces LR by half)
-  lr_decay_patience: 2         # Patience in epochs/iterations before decaying LR
-  lr_min: 0.000001             # Minimum learning rate floor limit
-  lr_decay_threshold: 0.0001   # Minimum delta metric change to qualify as performance improvement
-  lr_cooldown: 0               # Cooldown iterations after LR reduction
+  lr_decay_factor: 0.75        # Decay reduction factor (e.g. 0.5 reduces LR by half)
+  lr_decay_patience: 8         # Patience in epochs/iterations before decaying LR
+  lr_min: 1e-5                 # Minimum learning rate floor limit
+  lr_decay_threshold: 1e-5     # Minimum delta metric change to qualify as performance improvement
+  lr_cooldown: 3               # Cooldown iterations after LR reduction
 
 # --- Model Specific Parametrizations & Run Flags ---
 
