@@ -27,9 +27,12 @@ class GradientBoostingForecast:
         lr_decay_patience: int = 2,
         min_lr: float = 1e-5,
         min_delta: float = 1e-4,
-        cooldown: int = 0,
+        lr_cooldown: int = 0,
         lr_restart_patience: int = 6,
-        lr_restart_factor: float = 0.5
+        lr_restart_factor: float = 0.5,
+        max_lr: Optional[float] = None,
+        cycle_step_size: int = 5,
+        cyclic_mode: str = 'triangular'
     ):
         self.random_state = random_state
         self.max_iter = max_iter
@@ -45,6 +48,9 @@ class GradientBoostingForecast:
             cooldown=cooldown,
             restart_patience=lr_restart_patience,
             restart_factor=lr_restart_factor,
+            max_lr=max_lr,
+            cycle_step_size=cycle_step_size,
+            cyclic_mode=cyclic_mode,
             monitor='val_mae',
             mode='min',
             initial_lr=learning_rate
@@ -207,7 +213,10 @@ class RidgeLinearForecast:
         min_delta: float = 1e-4,
         cooldown: int = 0,
         lr_restart_patience: int = 6,
-        lr_restart_factor: float = 0.5
+        lr_restart_factor: float = 0.5,
+        max_lr: Optional[float] = None,
+        cycle_step_size: int = 5,
+        cyclic_mode: str = 'triangular'
     ):
         self.alpha = alpha
         self.learning_rate = learning_rate
@@ -229,6 +238,9 @@ class RidgeLinearForecast:
             cooldown=cooldown,
             restart_patience=lr_restart_patience,
             restart_factor=lr_restart_factor,
+            max_lr=max_lr,
+            cycle_step_size=cycle_step_size,
+            cyclic_mode=cyclic_mode,
             monitor='val_mae',
             mode='min',
             initial_lr=learning_rate

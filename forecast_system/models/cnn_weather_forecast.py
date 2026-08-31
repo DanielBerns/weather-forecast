@@ -31,7 +31,10 @@ class CNNForecastModel:
         lr_decay_threshold: float = 1e-4,
         lr_cooldown: int = 0,
         lr_restart_patience: int = 6,
-        lr_restart_factor: float = 0.5
+        lr_restart_factor: float = 0.5,
+        max_lr: Optional[float] = None,
+        cycle_step_size: int = 5,
+        cyclic_mode: str = 'triangular'
     ):
         self.filters = filters
         self.kernel_size = kernel_size
@@ -54,6 +57,9 @@ class CNNForecastModel:
             cooldown=lr_cooldown,
             restart_patience=lr_restart_patience,
             restart_factor=lr_restart_factor,
+            max_lr=max_lr,
+            cycle_step_size=cycle_step_size,
+            cyclic_mode=cyclic_mode,
             monitor='val_loss',
             mode='min',
             initial_lr=learning_rate

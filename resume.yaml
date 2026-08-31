@@ -8,17 +8,20 @@ pipeline:
 
 optimization:
   target_mae: 1.0              # Target validation MAE threshold in °C to reach adequate performance
-  epochs_per_iter: 5           # Number of training epochs executed per iteration block
-  max_iters: 6                 # Maximum number of restartable training iteration passes
+  epochs_per_iter: 8           # Number of training epochs executed per iteration block
+  max_iters: 8                 # Maximum number of restartable training iteration passes
   lr_decay_enabled: true       # Enable/disable performance-based learning rate decay policy
-  lr_decay_policy: "plateau_restart" # Policy strategy: "plateau", "plateau_restart", "exponential_plateau"
-  lr_decay_factor: 0.5         # Decay reduction factor (e.g. 0.5 reduces LR by half)
+  lr_decay_policy: "plateau_restart" # Policy strategy: "plateau", "plateau_restart", "exponential_plateau", "step_plateau", "cyclic"
+  lr_decay_factor: 0.75         # Decay reduction factor (e.g. 0.5 reduces LR by half)
   lr_decay_patience: 6         # Patience in epochs/iterations before decaying LR
-  lr_min: 0.00001              # Minimum learning rate floor limit
+  lr_min: 1e-3                 # Minimum learning rate floor limit (also base LR for cyclic)
   lr_decay_threshold: 0.00001  # Minimum delta metric change to qualify as performance improvement
   lr_cooldown: 3               # Cooldown iterations after LR reduction
   lr_restart_patience: 6       # Stagnation epochs at floor limit before triggering Warm Restart Bump
   lr_restart_factor: 0.5       # Warm restart factor to boost LR (bump_lr = restart_factor * initial_lr)
+  lr_max_lr: null              # Maximum peak learning rate for cyclic policy (defaults to initial_lr if null)
+  lr_cycle_step_size: 5        # Half-cycle duration in epochs for cyclic policy
+  lr_cyclic_mode: "triangular" # Cyclic mode: "triangular", "triangular2", or "exp_range"
 
 # --- Model Specific Parametrizations & Run Flags ---
 
@@ -29,25 +32,25 @@ climatology:
   enabled: true                # Enable/disable Climatology baseline model
 
 ridge:
-  enabled: true                # Enable/disable Ridge Linear Regression model
+  enabled: false               # Enable/disable Ridge Linear Regression model
   alpha: 1.0                   # L2 regularization strength for Ridge regression
   learning_rate: 0.01          # Base SGD learning rate for Ridge optimization
   lr_decay_enabled: true       # Enable LR decay policy on Ridge training
   lr_decay_policy: "plateau_restart"
-  lr_decay_factor: 0.5         # Factor by which LR is reduced upon plateau
+  lr_decay_factor: 0.75         # Factor by which LR is reduced upon plateau
   lr_decay_patience: 6         # Number of iterations without improvement before LR decay
   lr_cooldown: 3
   lr_restart_patience: 6
   lr_restart_factor: 0.5
 
 gbdt:
-  enabled: true                # Enable/disable Gradient Boosted Trees (HistGradientBoosting) model
+  enabled: false               # Enable/disable Gradient Boosted Trees (HistGradientBoosting) model
   max_iter: 40                 # Maximum iterations/trees for HistGradientBoosting
   learning_rate: 0.1           # Initial learning rate for gradient boosting
   random_state: 42             # Random state seed for reproducibility
   lr_decay_enabled: true       # Enable LR decay policy across boosting stages
   lr_decay_policy: "plateau_restart"
-  lr_decay_factor: 0.5         # Factor by which LR is reduced upon plateau
+  lr_decay_factor: 0.75         # Factor by which LR is reduced upon plateau
   lr_decay_patience: 6         # Number of iterations without improvement before LR decay
   lr_cooldown: 3
   lr_restart_patience: 6
@@ -62,7 +65,7 @@ lstm:
   dropout: 0.2                 # Dropout rate for regularization
   lr_decay_enabled: true       # Enable performance-based learning rate decay
   lr_decay_policy: "plateau_restart"
-  lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
+  lr_decay_factor: 0.75         # Factor by which LR is reduced upon performance plateau
   lr_decay_patience: 6         # Epochs without validation improvement before LR decay
   lr_cooldown: 3
   lr_restart_patience: 6
@@ -78,7 +81,7 @@ cnn:
   dropout: 0.2                 # Dropout rate for regularization
   lr_decay_enabled: true       # Enable performance-based learning rate decay
   lr_decay_policy: "plateau_restart"
-  lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
+  lr_decay_factor: 0.75         # Factor by which LR is reduced upon performance plateau
   lr_decay_patience: 6         # Epochs without validation improvement before LR decay
   lr_cooldown: 3
   lr_restart_patience: 6
@@ -93,7 +96,7 @@ dense:
   dropout: 0.2                 # Dropout rate for regularization
   lr_decay_enabled: true       # Enable performance-based learning rate decay
   lr_decay_policy: "plateau_restart"
-  lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
+  lr_decay_factor: 0.75         # Factor by which LR is reduced upon performance plateau
   lr_decay_patience: 6         # Epochs without validation improvement before LR decay
   lr_cooldown: 3
   lr_restart_patience: 6
@@ -106,7 +109,7 @@ linear:
   patience: 10                 # Early stopping patience in epochs
   lr_decay_enabled: true       # Enable performance-based learning rate decay
   lr_decay_policy: "plateau_restart"
-  lr_decay_factor: 0.5         # Factor by which LR is reduced upon performance plateau
+  lr_decay_factor: 0.75         # Factor by which LR is reduced upon performance plateau
   lr_decay_patience: 6         # Epochs without validation improvement before LR decay
   lr_cooldown: 3
   lr_restart_patience: 6

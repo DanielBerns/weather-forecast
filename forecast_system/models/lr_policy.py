@@ -1,4 +1,5 @@
 import logging
+import math
 import time
 from typing import Dict, Any, Tuple, Optional
 import tensorflow as tf
@@ -7,17 +8,14 @@ logger = logging.getLogger("forecast_system.lr_policy")
 
 class PerformanceLRDecayPolicy:
     """
-    Configurable Policy for Learning Rate Decay as a function of Learning Performance.
+    Configurable Policy for Learning Rate Decay and Cyclic Learning Rate (CLR).
 
-    Monitors a learning performance metric (e.g. validation loss or MAE) during model training.
-    When performance plateaus (fails to improve by at least min_delta over a specified patience window),
-    decays the learning rate according to the selected policy strategy.
-
-    Supported Policy Types:
-    -----------------------
-    - 'plateau': Multiplies current learning rate by `factor` (e.g. LR * 0.5).
+    Monitors performance metrics or applies predefined cyclic / plateau decay policies:
+    - 'plateau': Multiplies current learning rate by `factor` on performance stagnation.
+    - 'plateau_restart': Decays on plateau and triggers a Warm Restart Bump when flat at min_lr.
     - 'exponential_plateau': Exponentially decays learning rate based on decay step count.
-    - 'step_plateau': Subtracts a fixed step size (factor * initial_lr) from current learning rate.
+    - 'step_plateau': Subtracts a fixed step size from current learning rate.
+    - 'cyclic' / 'clr': Cyclical Learning Rate (triangular, triangular2, exp_range) between min_lr and max_lr.
     """
     def __init__(
         self,
@@ -30,6 +28,10 @@ class PerformanceLRDecayPolicy:
         cooldown: int = 0,
         restart_patience: int = 6,
         restart_factor: float = 0.5,
+        max_lr: Optional[float] = None,
+        cycle_step_size: int = 5,
+        cyclic_mode: str = 'triangular',
+        gamma: float = 0.999,
         monitor: str = 'val_loss',
         mode: str = 'min',
         initial_lr: Optional[float] = None
@@ -43,6 +45,10 @@ class PerformanceLRDecayPolicy:
         self.cooldown = int(cooldown)
         self.restart_patience = int(restart_patience)
         self.restart_factor = float(restart_factor)
+        self.max_lr = float(max_lr) if max_lr is not None else None
+        self.cycle_step_size = int(cycle_step_size)
+        self.cyclic_mode = cyclic_mode.lower() if cyclic_mode else 'triangular'
+        self.gamma = float(gamma)
         self.monitor = monitor
         self.mode = mode.lower()
         self.initial_lr = initial_lr
@@ -90,6 +96,39 @@ class PerformanceLRDecayPolicy:
 
         if self.initial_lr is None:
             self.initial_lr = current_lr
+
+        # Handle Cyclic Learning Rate (CLR)
+        if self.policy in ('cyclic', 'clr', 'triangular_cyclic'):
+            max_lr = self.max_lr if self.max_lr is not None else (self.initial_lr or current_lr)
+            base_lr = self.min_lr
+            step_size = max(1, self.cycle_step_size)
+
+            cycle = math.floor(1 + step_idx / (2 * step_size))
+            x = abs(step_idx / step_size - 2 * cycle + 1)
+            scale_factor = max(0.0, 1.0 - x)
+
+            if self.cyclic_mode == 'triangular2':
+                scale_factor = scale_factor / (2.0 ** (cycle - 1))
+            elif self.cyclic_mode == 'exp_range':
+                scale_factor = scale_factor * (self.gamma ** step_idx)
+
+            new_lr = base_lr + (max_lr - base_lr) * scale_factor
+
+            if abs(current_lr - new_lr) > 1e-12:
+                event_dict = {
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'model_name': model_name,
+                    'step_type': step_type,
+                    'step': step_idx,
+                    'monitor_metric': self.monitor,
+                    'metric_value': round(float(current_metric), 5),
+                    'old_lr': float(current_lr),
+                    'new_lr': float(new_lr),
+                    'policy': 'cyclic',
+                    'reason': f"Cyclic LR step ({self.cyclic_mode}): {new_lr:.6e}"
+                }
+                return new_lr, True, event_dict
+            return current_lr, False, None
 
         if self.cooldown_counter > 0:
             self.cooldown_counter -= 1

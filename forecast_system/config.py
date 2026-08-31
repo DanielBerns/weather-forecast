@@ -22,7 +22,10 @@ DEFAULT_CONFIG = {
         'lr_decay_threshold': 1e-4,
         'lr_cooldown': 0,
         'lr_restart_patience': 6,
-        'lr_restart_factor': 0.5
+        'lr_restart_factor': 0.5,
+        'lr_max_lr': None,
+        'lr_cycle_step_size': 5,
+        'lr_cyclic_mode': 'triangular'
     },
     'persistence': {
         'enabled': True
