@@ -1,6 +1,7 @@
 import os
 import joblib
 import logging
+from typing import Optional
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -45,7 +46,7 @@ class GradientBoostingForecast:
             patience=lr_decay_patience,
             min_lr=min_lr,
             min_delta=min_delta,
-            cooldown=cooldown,
+            cooldown=lr_cooldown,
             restart_patience=lr_restart_patience,
             restart_factor=lr_restart_factor,
             max_lr=max_lr,
