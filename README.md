@@ -48,23 +48,24 @@ uv run python tests/test_forecast_system.py
 
 ---
 
-### 2. Pipeline Execution (`-c` / `--config`)
+### 2. Pipeline Execution (`--directory` / `-d`)
 
-The pipeline CLI accepts `--config` (or `-c`) as its sole command-line parameter. All pipeline settings (execution mode, iteration counts, target MAE, output directories) are configured directly in `config.yaml`.
+The pipeline CLI accepts `--directory` (or `-d`) pointing to your configuration workspace directory containing `reset.yaml` and `resume.yaml`. The system automatically determines whether to run in `reset` mode (if `outputs` doesn't exist) or `resume` mode (if `outputs` exists with complete training state files).
 
 ```bash
-uv run forecast-pipeline --config config.yaml
+uv run forecast-pipeline --directory path_to_directory
 ```
 
 *Alternative explicit module invocation:*
 ```bash
-uv run python -m forecast_system.pipeline -c config.yaml
+uv run python -m forecast_system.pipeline --directory path_to_directory
 ```
 
 #### Pipeline CLI Configuration Parameters:
-| Option | Choices / Default | Description |
-| :--- | :--- | :--- |
-| `-c`, `--config` | `config.yaml` (default if omitted) | Path to YAML configuration file |
+| Option | Description |
+| :--- | :--- |
+| `-d`, `--directory` | Path to workspace directory containing `reset.yaml` and `resume.yaml` |
+
 
 ---
 

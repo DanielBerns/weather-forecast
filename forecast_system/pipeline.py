@@ -10,7 +10,7 @@ from pathlib import Path
 
 import logging
 from datetime import datetime
-from forecast_system.config import load_config, get_git_repo_root
+from forecast_system.config import load_config, get_git_repo_root, resolve_config_for_directory
 from forecast_system.data.loader import load_combined_dataset, get_train_val_test_splits
 from forecast_system.data.feature_engineering import create_features_and_targets
 from forecast_system.data.quality_analysis import export_data_properties_json
@@ -80,10 +80,19 @@ def setup_file_logging(logs_dir="logs"):
     logging.info("========================================================")
     return log_file
 
-def run_pipeline(config_path=None):
-    # 1. Load YAML Configuration (and enforce git repo check)
+def run_pipeline(directory=None, config_path=None):
+    # 1. Load YAML Configuration via directory resolution or config file
     try:
-        cfg = load_config(config_path)
+        if directory is not None:
+            p = Path(directory)
+            if p.is_file():
+                cfg = load_config(p)
+            else:
+                cfg = resolve_config_for_directory(directory)
+        elif config_path is not None:
+            cfg = load_config(config_path)
+        else:
+            raise ValueError("Must specify workspace directory with '--directory' (or config file with '--config')")
     except (FileNotFoundError, ValueError, yaml.YAMLError) as e:
         print("\n========================================================", file=sys.stderr)
         print("ERROR: Configuration Initialization Failure", file=sys.stderr)
@@ -499,11 +508,16 @@ def run_pipeline(config_path=None):
     print("\nPipeline execution complete!")
 
 def main():
-    parser = argparse.ArgumentParser(description="Run weather forecast pipeline with YAML configuration.")
-    parser.add_argument("-c", "--config", type=str, default=None, help="Path to YAML configuration file (e.g. config.yaml)")
+    parser = argparse.ArgumentParser(description="Run weather forecast pipeline with workspace directory configuration.")
+    parser.add_argument("-d", "--directory", type=str, default=None, help="Path to workspace directory containing reset.yaml and resume.yaml")
+    parser.add_argument("-c", "--config", type=str, default=None, help="Path to YAML configuration file (legacy option)")
 
     args = parser.parse_args()
-    run_pipeline(config_path=args.config)
+    if not args.directory and not args.config:
+        parser.error("the argument --directory/-d is required (e.g. uv run forecast-pipeline --directory path_to_directory)")
+
+    run_pipeline(directory=args.directory, config_path=args.config)
 
 if __name__ == "__main__":
     main()
+

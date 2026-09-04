@@ -63,7 +63,7 @@ class LinearForecastModel:
     def _build_model(self, input_dim, output_dim=24):
         model = keras.Sequential([
             layers.Input(shape=(input_dim,)),
-            layers.Dense(output_dim, kernel_initializer=tf.initializers.zeros())
+            layers.Dense(output_dim, kernel_initializer='zeros')
         ])
         model.compile(
             optimizer=keras.optimizers.Adam(learning_rate=self.learning_rate),

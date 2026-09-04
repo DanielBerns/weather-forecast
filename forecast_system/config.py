@@ -253,3 +253,104 @@ def load_config(config_path=None):
     return config
 
 
+STATE_FILE_MAP = {
+    'lstm': 'lstm_checkpoint.keras',
+    'cnn': 'cnn_checkpoint.keras',
+    'dense': 'dense_checkpoint.keras',
+    'linear': 'linear_checkpoint.keras',
+    'gbdt': 'gbdt_checkpoint.joblib',
+    'ridge': 'ridge_training_history.json',
+}
+
+
+def is_model_enabled(cfg, model_name):
+    sec = cfg.get(model_name, {})
+    if not isinstance(sec, dict):
+        if model_name == 'lstm' and isinstance(cfg.get('deep_learning'), dict):
+            sec = cfg.get('deep_learning')
+        else:
+            sec = {}
+    return bool(sec.get('enabled', True))
+
+
+def get_required_state_files(config_dict):
+    """
+    Returns a list of required state filenames based on enabled models in config.
+    """
+    required = []
+    for model_name, filename in STATE_FILE_MAP.items():
+        if is_model_enabled(config_dict, model_name):
+            required.append(filename)
+    return required
+
+
+def resolve_config_for_directory(directory_path):
+    """
+    Resolves configuration by inspecting a CLI directory parameter.
+    1. Validates git repo restriction on directory_path.
+    2. Validates presence of reset.yaml and resume.yaml.
+    3. Checks subdirectory outputs:
+       - If outputs does not exist: loads reset.yaml (reset mode).
+       - If outputs exists and contains all required training state files: loads resume.yaml (resume mode).
+       - If outputs exists but is missing required training state files: raises ValueError reporting missing files.
+    """
+    if directory_path is None:
+        raise ValueError("Directory parameter '--directory' is required.")
+
+    dir_path = Path(directory_path).resolve()
+
+    if not dir_path.exists() or not dir_path.is_dir():
+        raise FileNotFoundError(f"Configuration workspace directory not found at '{dir_path}'")
+
+    in_repo, git_root = is_path_in_git_repo(dir_path)
+    if in_repo:
+        raise ValueError(
+            f"Refusing to run: Configuration directory '{dir_path}' is inside the Git repository at '{git_root}'. "
+            f"Please place configuration directories outside the Git repository."
+        )
+
+    reset_path = dir_path / "reset.yaml"
+    resume_path = dir_path / "resume.yaml"
+
+    missing_files = []
+    if not reset_path.is_file():
+        missing_files.append("reset.yaml")
+    if not resume_path.is_file():
+        missing_files.append("resume.yaml")
+
+    if missing_files:
+        raise FileNotFoundError(
+            f"Configuration workspace directory '{dir_path}' is missing required configuration file(s): {', '.join(missing_files)}"
+        )
+
+    # Locate outputs subdirectory (either directly inside dir_path or under output_dir e.g. report/outputs)
+    outputs_dir = None
+    if (dir_path / "outputs").is_dir():
+        outputs_dir = dir_path / "outputs"
+    elif (dir_path / "report" / "outputs").is_dir():
+        outputs_dir = dir_path / "report" / "outputs"
+
+    if outputs_dir is None or not outputs_dir.exists():
+        # Case A: outputs directory does not exist -> load reset.yaml
+        print(f"✓ [PROTOCOL] 'outputs' directory not found in '{dir_path}'. Selected 'reset.yaml' (Reset Mode).", flush=True)
+        return load_config(reset_path)
+
+    # Case B/C: outputs directory exists -> check required training state files for resume mode
+    resume_cfg = load_config(resume_path)
+    required_state_files = get_required_state_files(resume_cfg)
+
+    missing_state_files = [f for f in required_state_files if not (outputs_dir / f).exists()]
+
+    if not missing_state_files:
+        # Case B: outputs directory complete -> load resume.yaml
+        print(f"✓ [PROTOCOL] 'outputs' directory found at '{outputs_dir}' with complete training state files. Selected 'resume.yaml' (Resume Mode).", flush=True)
+        return resume_cfg
+    else:
+        # Case C: outputs directory incomplete -> report error
+        raise ValueError(
+            f"Incomplete state in outputs directory '{outputs_dir}'. Missing required training state file(s): {', '.join(missing_state_files)}. "
+            f"Run in reset mode or clear the outputs directory."
+        )
+
+
+

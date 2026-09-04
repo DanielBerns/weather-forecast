@@ -183,7 +183,7 @@ def test_formatted_invalid_config_error():
 
     err_msg = buf.getvalue()
     assert "ERROR: Configuration Initialization Failure" in err_msg
-    assert "Configuration file not found" in err_msg
+    assert "Configuration file not found" in err_msg or "Configuration workspace directory not found" in err_msg
     assert "Traceback" not in err_msg
 
     # 2. Test in-repo config file path
@@ -351,19 +351,19 @@ def test_cli_argument_parsing():
     from unittest.mock import patch
     from forecast_system.pipeline import main
 
-    # 1. Test valid --config argument
-    with patch.object(sys, 'argv', ['pipeline.py', '--config', 'config.yaml']):
+    # 1. Test valid --directory argument
+    with patch.object(sys, 'argv', ['pipeline.py', '--directory', '/tmp/workspace']):
         with patch('forecast_system.pipeline.run_pipeline') as mock_run:
             main()
-            mock_run.assert_called_once_with(config_path='config.yaml')
+            mock_run.assert_called_once_with(directory='/tmp/workspace', config_path=None)
 
-    # 2. Test valid -c short argument
-    with patch.object(sys, 'argv', ['pipeline.py', '-c', 'custom_config.yaml']):
+    # 2. Test valid -d short argument
+    with patch.object(sys, 'argv', ['pipeline.py', '-d', '/tmp/workspace']):
         with patch('forecast_system.pipeline.run_pipeline') as mock_run:
             main()
-            mock_run.assert_called_once_with(config_path='custom_config.yaml')
+            mock_run.assert_called_once_with(directory='/tmp/workspace', config_path=None)
 
-    # 3. Test removed CLI parameter triggers SystemExit
+    # 3. Test removed/invalid CLI parameters trigger SystemExit
     for invalid_arg in ['--mode', '--epochs-per-iter', '--max-iters', '--target-mae', '--output-dir']:
         with patch.object(sys, 'argv', ['pipeline.py', invalid_arg, 'value']):
             try:
@@ -374,6 +374,99 @@ def test_cli_argument_parsing():
                 pass
 
     print("✓ test_cli_argument_parsing passed!")
+
+
+def test_resolve_config_for_directory():
+    from forecast_system.config import resolve_config_for_directory
+    from pathlib import Path
+
+    # 1. Missing directory
+    try:
+        resolve_config_for_directory(os.path.join(tempfile.gettempdir(), "non_existent_workspace_dir_12345"))
+        assert False, "Expected FileNotFoundError for non-existent workspace directory"
+    except FileNotFoundError:
+        pass
+
+    # 2. Workspace missing reset.yaml or resume.yaml
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        with open(tmp_path / "reset.yaml", 'w') as f:
+            f.write("pipeline:\n  mode: reset\n")
+        try:
+            resolve_config_for_directory(tmp_dir)
+            assert False, "Expected FileNotFoundError when resume.yaml is missing"
+        except FileNotFoundError as e:
+            assert "missing required configuration file(s): resume.yaml" in str(e)
+
+    # 3. Outputs directory missing -> selects reset.yaml
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        with open(tmp_path / "reset.yaml", 'w') as f:
+            f.write("pipeline:\n  mode: reset\n")
+        with open(tmp_path / "resume.yaml", 'w') as f:
+            f.write("pipeline:\n  mode: resume\n")
+
+        cfg = resolve_config_for_directory(tmp_dir)
+        assert cfg['pipeline']['mode'] == "reset"
+
+    # 4. Outputs directory exists with all training state files -> selects resume.yaml
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        with open(tmp_path / "reset.yaml", 'w') as f:
+            f.write("pipeline:\n  mode: reset\n")
+        with open(tmp_path / "resume.yaml", 'w') as f:
+            f.write("""
+pipeline:
+  mode: resume
+gbdt:
+  enabled: false
+ridge:
+  enabled: false
+lstm:
+  enabled: true
+cnn:
+  enabled: true
+dense:
+  enabled: false
+linear:
+  enabled: false
+""")
+
+        outputs_dir = tmp_path / "report" / "outputs"
+        outputs_dir.mkdir(parents=True, exist_ok=True)
+        (outputs_dir / "lstm_checkpoint.keras").write_text("dummy lstm state")
+        (outputs_dir / "cnn_checkpoint.keras").write_text("dummy cnn state")
+
+        cfg = resolve_config_for_directory(tmp_dir)
+        assert cfg['pipeline']['mode'] == "resume"
+
+    # 5. Outputs directory exists but missing required state file -> raises ValueError
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        with open(tmp_path / "reset.yaml", 'w') as f:
+            f.write("pipeline:\n  mode: reset\n")
+        with open(tmp_path / "resume.yaml", 'w') as f:
+            f.write("""
+pipeline:
+  mode: resume
+lstm:
+  enabled: true
+cnn:
+  enabled: true
+""")
+
+        outputs_dir = tmp_path / "report" / "outputs"
+        outputs_dir.mkdir(parents=True, exist_ok=True)
+        (outputs_dir / "lstm_checkpoint.keras").write_text("dummy lstm state")
+
+        try:
+            resolve_config_for_directory(tmp_dir)
+            assert False, "Expected ValueError when state files are missing"
+        except ValueError as e:
+            assert "Missing required training state file(s)" in str(e)
+            assert "cnn_checkpoint.keras" in str(e)
+
+    print("✓ test_resolve_config_for_directory passed!")
 
 def test_gbdt_checkpoint_and_selective_models():
     from forecast_system.models.ml_models import GradientBoostingForecast
@@ -502,9 +595,11 @@ if __name__ == '__main__':
     test_restartable_training()
     test_reset_and_resume_modes()
     test_cli_argument_parsing()
+    test_resolve_config_for_directory()
     test_gbdt_checkpoint_and_selective_models()
     test_cnn_dense_linear_models()
     test_enabled_flags_and_full_config()
     print("ALL UNIT TESTS PASSED SUCCESSFULLY!")
+
 
 

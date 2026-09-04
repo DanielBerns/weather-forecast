@@ -256,10 +256,10 @@ class RidgeLinearForecast:
         if lr_decay_enabled:
             # Iterative SGD Ridge Regressor with tol=None to allow custom epoch stepping without ConvergenceWarning
             self.hourly_model = MultiOutputRegressor(
-                SGDRegressor(penalty='l2', alpha=alpha, eta0=learning_rate, learning_rate='constant', warm_start=True, max_iter=20, tol=None, random_state=42)
+                SGDRegressor(penalty='l2', alpha=alpha, eta0=learning_rate, learning_rate='constant', warm_start=True, max_iter=2, tol=None, random_state=42)
             )
             self.summary_model = MultiOutputRegressor(
-                SGDRegressor(penalty='l2', alpha=alpha, eta0=learning_rate, learning_rate='constant', warm_start=True, max_iter=20, tol=None, random_state=42)
+                SGDRegressor(penalty='l2', alpha=alpha, eta0=learning_rate, learning_rate='constant', warm_start=True, max_iter=2, tol=None, random_state=42)
             )
         else:
             # Analytical Ridge
@@ -304,25 +304,32 @@ class RidgeLinearForecast:
         X_va_sc = (X_val - self.mean_X) / self.std_X
 
         for epoch in range(1, max_epochs + 1):
-            # Update learning rate safely before/after fit
+            epoch_max_iter = epoch * 2
+            # Update learning rate & max_iter safely before fit
             try:
                 estimators_h = getattr(self.hourly_model, 'estimators_', None)
                 if estimators_h is not None:
                     for est in estimators_h:
+                        est.max_iter = epoch_max_iter
                         est.eta0 = current_lr
                 else:
+                    self.hourly_model.estimator.max_iter = epoch_max_iter
                     self.hourly_model.estimator.eta0 = current_lr
             except AttributeError:
+                self.hourly_model.estimator.max_iter = epoch_max_iter
                 self.hourly_model.estimator.eta0 = current_lr
 
             try:
                 estimators_s = getattr(self.summary_model, 'estimators_', None)
                 if estimators_s is not None:
                     for est in estimators_s:
+                        est.max_iter = epoch_max_iter
                         est.eta0 = current_lr
                 else:
+                    self.summary_model.estimator.max_iter = epoch_max_iter
                     self.summary_model.estimator.eta0 = current_lr
             except AttributeError:
+                self.summary_model.estimator.max_iter = epoch_max_iter
                 self.summary_model.estimator.eta0 = current_lr
 
             self.hourly_model.fit(X_tr_sc, Y_h_tr_sc)

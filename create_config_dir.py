@@ -50,9 +50,9 @@ def create_external_config_dir(target_dir_path):
         print(f"Warning: Source file '{source_resume}' not found in repo.", file=sys.stderr)
 
     print("\nInitialization complete!")
-    print(f"You can now run the pipeline using one of your external configuration files, e.g.:")
-    print(f"  uv run forecast-pipeline -c {target_dir / 'reset.yaml'}")
-    print(f"  uv run forecast-pipeline -c {target_dir / 'resume.yaml'}")
+    print(f"You can now run the pipeline specifying your external configuration directory:")
+    print(f"  uv run forecast-pipeline --directory {target_dir}")
+
 
 
 
